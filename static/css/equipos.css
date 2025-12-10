@@ -1,5 +1,16 @@
-/* Estilos para la página de equipos */
+/* ============================================
+   ARCHIVO: equipos.css
+   DESCRIPCIÓN: Estilos personalizados para la página de equipos
+   FUNCIÓN: Diseño visual de tabla, modal, botones y responsive
+   TECNOLOGÍAS: CSS3, Flexbox, Grid, Animations
+   ============================================ */
 
+/* ============================================
+   ESTILOS GLOBALES Y FONDO
+   ============================================ */
+/* Body con imagen de fondo fija y blur
+   background-attachment: fixed = parallax effect
+   background-size: cover = imagen completa sin distorsión */
 body {
     background-image: url('/static/image/fondo.jpg');
     background-attachment: fixed;
@@ -9,6 +20,12 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* ============================================
+   CONTENEDOR PRINCIPAL
+   ============================================ */
+/* Container con backdrop blur para efecto glassmorphism
+   rgba(255, 255, 255, 0.95) = blanco con 95% opacidad
+   backdrop-filter: blur(20px) = desenfoque del fondo */
 .container {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 24px;
@@ -20,6 +37,12 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+/* ============================================
+   TÍTULO PRINCIPAL
+   ============================================ */
+/* Título con gradiente de color púrpura
+   -webkit-background-clip: text = aplica gradiente al texto
+   -webkit-text-fill-color: transparent = hace texto transparente para mostrar gradiente */
 h1 {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     -webkit-background-clip: text;
@@ -32,6 +55,12 @@ h1 {
     letter-spacing: -0.5px;
 }
 
+/* ============================================
+   ENCABEZADO DE LA PÁGINA
+   ============================================ */
+/* Header con flexbox para alinear título y botón
+   justify-content: space-between = espacio entre elementos
+   flex-wrap: wrap = responsive en pantallas pequeñas */
 .header {
     display: flex;
     justify-content: space-between;
@@ -41,10 +70,16 @@ h1 {
     gap: 20px;
 }
 
+/* Elimina margen del h1 dentro del header */
 .header h1 {
     margin: 0;
 }
 
+/* ============================================
+   TABLA DE EQUIPOS
+   ============================================ */
+/* Wrapper con scroll horizontal para tablas grandes
+   overflow-x: auto = scroll solo cuando sea necesario */
 .tabla-wrapper {
     overflow-x: auto;
     border-radius: 16px;
@@ -52,18 +87,26 @@ h1 {
     border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
+/* Tabla con ancho completo y bordes colapsados */
 table {
     width: 100%;
     border-collapse: collapse;
     background-color: white;
 }
 
+/* ============================================
+   ENCABEZADO DE LA TABLA (thead)
+   ============================================ */
+/* Encabezado con gradiente púrpura y texto blanco */
 thead {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     font-weight: bold;
 }
 
+/* Celdas de encabezado (th) con estilo mayúsculas
+   text-transform: uppercase = texto en mayúsculas
+   letter-spacing: 1.2px = espaciado entre letras */
 th {
     padding: 20px 18px;
     text-align: left;
@@ -75,21 +118,30 @@ th {
     background-clip: padding-box;
 }
 
+/* ============================================
+   FILAS DEL CUERPO DE LA TABLA (tbody)
+   ============================================ */
+/* Filas con transición suave en hover
+   transition con cubic-bezier = animación personalizada */
 tbody tr {
     border-bottom: 1px solid #f0f0f0;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Filas pares con fondo gris claro para zebra striping */
 tbody tr:nth-child(even) {
     background-color: #f8f9fc;
 }
 
+/* Efecto hover en filas: gradiente sutil, sombra interna y scale
+   transform: scale(1.01) = agranda ligeramente la fila */
 tbody tr:hover {
     background: linear-gradient(90deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
     box-shadow: inset 0 0 15px rgba(102, 126, 234, 0.15);
     transform: scale(1.01);
 }
 
+/* Celdas del cuerpo (td) con padding y color de texto */
 td {
     padding: 16px;
     font-size: 13px;
@@ -97,12 +149,20 @@ td {
     font-weight: 500;
 }
 
+/* ============================================
+   BOTONES DE ACCIÓN (Editar/Eliminar)
+   ============================================ */
+/* Contenedor de botones con flexbox y gap
+   flex-wrap: wrap = botones se ajustan en pantallas pequeñas */
 .acciones {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
 }
 
+/* Estilo base para botones de acción
+   cubic-bezier personalizado = animación con "bounce"
+   inline-flex = alinea emoji/texto horizontalmente */
 .btn-accion {
     padding: 10px 16px;
     border: none;
@@ -118,26 +178,38 @@ td {
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
 }
 
+/* Botón Editar: gradiente azul cyan */
 .btn-editar {
     background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
 }
 
+/* Hover en Editar: eleva el botón y aumenta sombra
+   translateY(-2px) = mueve hacia arriba
+   scale(1.05) = agranda 5% */
 .btn-editar:hover {
     transform: translateY(-2px) scale(1.05);
     box-shadow: 0 6px 20px rgba(79, 172, 254, 0.5);
     background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
 }
 
+/* Botón Eliminar: gradiente rosa/rojo */
 .btn-eliminar {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
+/* Hover en Eliminar: mismo efecto que Editar pero con colores diferentes */
 .btn-eliminar:hover {
     transform: translateY(-2px) scale(1.05);
     box-shadow: 0 6px 20px rgba(245, 87, 108, 0.5);
     background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
 }
 
+/* ============================================
+   BADGES DE ESTADO
+   ============================================ */
+/* Badge verde para estado "Activo"
+   border-radius: 20px = forma de píldora
+   border: 2px solid = borde con color del estado */
 .estado-activo {
     background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
     color: #155724;
@@ -150,6 +222,7 @@ td {
     box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
 }
 
+/* Badge rojo para estado "Inactivo" */
 .estado-inactivo {
     background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
     color: #721c24;
@@ -162,6 +235,10 @@ td {
     box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
 }
 
+/* ============================================
+   CONTENEDOR DE BOTONES Y NAVEGACIÓN
+   ============================================ */
+/* Contenedor centrado con flexbox */
 .botones-container {
     display: flex;
     gap: 15px;
@@ -170,6 +247,9 @@ td {
     flex-wrap: wrap;
 }
 
+/* Botón "Volver al Registro"
+   inline-block = respeta padding/margin
+   text-decoration: none = elimina subrayado del enlace */
 .btn-volver {
     display: inline-block;
     padding: 14px 35px;
@@ -185,12 +265,18 @@ td {
     letter-spacing: 0.5px;
 }
 
+/* Hover en botón volver: eleva más que botones de acción */
 .btn-volver:hover {
     transform: translateY(-3px) scale(1.05);
     box-shadow: 0 10px 30px rgba(102, 126, 234, 0.6);
     background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
 }
 
+/* ============================================
+   CONTADOR Y MENSAJES
+   ============================================ */
+/* Contador de equipos registrados
+   Muestra "Total: X equipos" en la parte inferior */
 .contador {
     text-align: center;
     color: #666;
@@ -199,6 +285,7 @@ td {
     font-weight: 500;
 }
 
+/* Número del contador con gradiente púrpura */
 .contador strong {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     -webkit-background-clip: text;
@@ -208,6 +295,7 @@ td {
     font-weight: 700;
 }
 
+/* Mensaje cuando no hay equipos registrados */
 .sin-datos {
     text-align: center;
     padding: 60px 20px;
@@ -216,10 +304,16 @@ td {
     font-weight: 500;
 }
 
+/* ============================================
+   ANIMACIONES DE CARGA
+   ============================================ */
+/* Contenedor de lista con animación fade-in */
 .lista-equipos {
     animation: fadeIn 0.6s ease-out;
 }
 
+/* Mensaje de "Cargando equipos..." con animación pulsante
+   animation: pulse = opacidad cambia continuamente */
 .cargando {
     text-align: center;
     padding: 60px 20px;
@@ -229,12 +323,19 @@ td {
     animation: pulse 1.5s ease-in-out infinite;
 }
 
+/* Animación pulse: oscila entre opacidad 1 y 0.5 */
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
 }
 
-/* Modal Styles */
+/* ============================================
+   MODAL DE EDICIÓN
+   ============================================ */
+/* Overlay del modal que cubre toda la pantalla
+   display: none = oculto por defecto
+   z-index: 1000 = se muestra sobre todo lo demás
+   backdrop-filter: blur(4px) = desenfocar fondo detrás del modal */
 .modal {
     display: none;
     position: fixed;
@@ -248,6 +349,10 @@ td {
     animation: fadeIn 0.3s ease;
 }
 
+/* Contenedor del contenido del modal
+   max-height: 90vh = no excede 90% de altura de viewport
+   overflow-y: auto = scroll vertical si el contenido es muy largo
+   animation: slideIn = entra desde arriba con animación */
 .modal-content {
     background: linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%);
     margin: 2% auto;
@@ -261,6 +366,10 @@ td {
     animation: slideIn 0.4s ease;
 }
 
+/* ============================================
+   ENCABEZADO DEL MODAL
+   ============================================ */
+/* Header con gradiente púrpura y bordes redondeados superiores */
 .modal-header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     padding: 30px 40px;
@@ -271,6 +380,7 @@ td {
     border-radius: 20px 20px 0 0;
 }
 
+/* Título del modal con sombra de texto */
 .modal-header h2 {
     color: white;
     margin: 0;
@@ -280,6 +390,9 @@ td {
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
+/* Botón X para cerrar modal
+   border-radius: 50% = forma circular
+   transform: rotate(90deg) en hover = gira 90 grados */
 .close {
     color: rgba(255, 255, 255, 0.8);
     font-size: 32px;
@@ -296,20 +409,32 @@ td {
     line-height: 1;
 }
 
+/* Hover en botón cerrar: rotación de 90 grados */
 .close:hover {
     color: white;
     background: rgba(255, 255, 255, 0.2);
     transform: rotate(90deg);
 }
 
+/* ============================================
+   FORMULARIO DE EDICIÓN
+   ============================================ */
+/* Padding del formulario dentro del modal */
 #formEditar {
     padding: 40px;
 }
 
+/* ============================================
+   GRUPOS DE CAMPOS
+   ============================================ */
+/* Contenedor para cada campo del formulario */
 .form-group {
     margin-bottom: 24px;
 }
 
+/* Labels de los campos
+   text-transform: uppercase = texto en mayúsculas
+   letter-spacing = espaciado entre letras para mejor legibilidad */
 .form-group label {
     display: block;
     margin-bottom: 10px;
@@ -320,6 +445,9 @@ td {
     letter-spacing: 0.6px;
 }
 
+/* Inputs y selects con estilo consistente
+   box-sizing: border-box = padding incluido en width
+   border: 2px = borde grueso para mejor visibilidad */
 .form-group input,
 .form-group select {
     width: 100%;
@@ -334,10 +462,14 @@ td {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
+/* Color del placeholder de los inputs */
 .form-group input::placeholder {
     color: #bbb;
 }
 
+/* Estado focus de inputs y selects
+   box-shadow con rgba = sombra de color suave
+   transform: translateY(-1px) = eleva ligeramente el campo */
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
@@ -347,6 +479,9 @@ td {
     transform: translateY(-1px);
 }
 
+/* Select con flecha personalizada (SVG en data URI)
+   appearance: none = elimina flecha predeterminada del navegador
+   background-image con SVG = flecha personalizada color púrpura */
 .form-group select {
     cursor: pointer;
     appearance: none;
@@ -357,6 +492,11 @@ td {
     background-size: 14px;
 }
 
+/* ============================================
+   LAYOUT CON GRID
+   ============================================ */
+/* Fila con 3 columnas para organizar campos
+   grid-template-columns: 1fr 1fr 1fr = 3 columnas iguales */
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -364,14 +504,21 @@ td {
     margin-bottom: 5px;
 }
 
+/* Clase para fila de ancho completo (1 columna) */
 .form-row.full {
     grid-template-columns: 1fr;
 }
 
+/* Clase para fila con 2 columnas */
 .form-row.double {
     grid-template-columns: 1fr 1fr;
 }
 
+/* ============================================
+   BOTONES DEL MODAL
+   ============================================ */
+/* Contenedor de botones alineados a la derecha
+   border-top = línea separadora entre formulario y botones */
 .modal-buttons {
     display: flex;
     gap: 15px;
@@ -381,6 +528,8 @@ td {
     border-top: 2px solid #e8ecf1;
 }
 
+/* Estilo base para botones del modal
+   min-width: 140px = ancho mínimo consistente */
 .btn-modal {
     padding: 14px 36px;
     border: none;
@@ -393,43 +542,55 @@ td {
     min-width: 140px;
 }
 
+/* Botón "Guardar Cambios" con gradiente púrpura */
 .btn-guardar {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
+/* Hover en Guardar: eleva y agranda el botón */
 .btn-guardar:hover {
     transform: translateY(-2px) scale(1.05);
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
     background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
 }
 
+/* Active en Guardar: regresa a posición normal */
 .btn-guardar:active {
     transform: translateY(0) scale(1);
 }
 
+/* Botón "Cancelar" con fondo gris claro */
 .btn-cancelar {
     background-color: #f0f3f8;
     color: #2c3e50;
     border: 1.5px solid #dfe3eb;
 }
 
+/* Hover en Cancelar: oscurece el fondo */
 .btn-cancelar:hover {
     background-color: #e8ecf1;
     border-color: #d0d6e0;
     transform: translateY(-2px);
 }
 
+/* Active en Cancelar: regresa a posición normal */
 .btn-cancelar:active {
     transform: translateY(0);
 }
 
+/* ============================================
+   ANIMACIONES
+   ============================================ */
+/* Animación fadeIn: aparece gradualmente */
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
 }
 
+/* Animación slideIn: entra desde arriba
+   Usada cuando el modal se abre */
 @keyframes slideIn {
     from {
         opacity: 0;
@@ -441,6 +602,15 @@ td {
     }
 }
 
+/* ============================================
+   MEDIA QUERIES - RESPONSIVE DESIGN
+   ============================================ */
+
+/* ============================================
+   TABLETS Y PANTALLAS MEDIANAS (max-width: 1024px)
+   ============================================ */
+/* En tablets, form-row pasa de 3 a 2 columnas
+   Modal se ajusta a 94% del ancho */
 @media (max-width: 1024px) {
     .form-row {
         grid-template-columns: 1fr 1fr;
@@ -452,43 +622,59 @@ td {
     }
 }
 
+/* ============================================
+   MÓVILES Y PANTALLAS PEQUEÑAS (max-width: 768px)
+   ============================================ */
+/* Ajustes masivos para dispositivos móviles */
 @media (max-width: 768px) {
+    /* Reducir padding del container */
     .container {
         padding: 20px;
         margin: 15px auto;
     }
 
+    /* Reducir tamaño de título principal */
     h1 {
         font-size: 24px;
         margin-bottom: 25px;
     }
 
+    /* Reducir tamaño de fuente de tabla */
     table {
         font-size: 11px;
     }
 
+    /* Reducir padding de celdas de tabla */
     th, td {
         padding: 12px 8px;
     }
 
+    /* Reducir tamaño de botones de acción */
     .btn-accion {
         padding: 6px 10px;
         font-size: 11px;
     }
 
+    /* Botones de acción en columna vertical */
     .acciones {
         flex-direction: column;
     }
 
+    /* Botones del contenedor en columna */
     .botones-container {
         flex-direction: column;
     }
 
+    /* Botón volver ocupa todo el ancho */
     .btn-volver {
         width: 100%;
         text-align: center;
     }
 
+    /* ============================================
+       AJUSTES DEL MODAL EN MÓVILES
+       ============================================ */
+    /* Modal ocupa 98% del ancho en móviles */
     .modal-content {
         width: 98%;
         margin: 10% auto;
@@ -497,57 +683,69 @@ td {
         border-radius: 16px;
     }
 
+    /* Reducir padding del formulario */
     #formEditar {
         padding: 25px;
     }
 
+    /* Form-row a 1 columna en móviles */
     .form-row {
         grid-template-columns: 1fr;
         gap: 18px;
         margin-bottom: 8px;
     }
 
+    /* Reducir tamaño de inputs y selects */
     .form-group input,
     .form-group select {
         padding: 12px 14px;
         font-size: 14px;
     }
 
+    /* Reducir tamaño de labels */
     .form-group label {
         font-size: 12px;
         margin-bottom: 8px;
     }
 
+    /* Reducir tamaño de botones del modal */
     .btn-modal {
         padding: 11px 20px;
         font-size: 13px;
     }
 
+    /* Botones del modal en columna vertical */
     .modal-buttons {
         flex-direction: column;
         margin-top: 25px;
     }
 
+    /* Botones del modal ocupan todo el ancho */
     .btn-modal {
         width: 100%;
     }
 
+    /* Reducir padding del header del modal */
     .modal-header {
         padding: 18px 20px;
     }
 
+    /* Reducir tamaño del título del modal */
     .modal-header h2 {
         font-size: 20px;
     }
 
+    /* Ajustar padding del container nuevamente */
     .container {
         padding: 30px 20px;
     }
 
+    /* Ajustar tamaño del título */
     h1 {
         font-size: 28px;
     }
 
+    /* Header en columna vertical centrado */
     .header {
         flex-direction: column;
         text-align: center;

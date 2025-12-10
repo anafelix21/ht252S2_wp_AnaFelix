@@ -1,26 +1,70 @@
+<!-- 
+============================================
+ARCHIVO: index.html
+DESCRIPCIÓN: Página principal del sistema - Formulario de registro de equipos
+FUNCIÓN: Permite registrar nuevos equipos en la base de datos
+TECNOLOGÍAS: HTML5, Tailwind CSS, JavaScript
+============================================
+-->
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <!-- ============================================
+         METADATOS Y CONFIGURACIÓN DEL DOCUMENTO
+         ============================================ -->
+    <!-- Codificación de caracteres UTF-8 para soportar caracteres especiales -->
     <meta charset="UTF-8">
+    
+    <!-- Configuración responsive para dispositivos móviles -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Título que aparece en la pestaña del navegador -->
     <title>Bienvenido - Registro de Equipos</title>
+    
+    <!-- Importación de estilos CSS compilados de Tailwind -->
+    <!-- url_for es una función de Flask para generar rutas dinámicas -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
 </head>
 <body>
+    <!-- ============================================
+         CONTENEDOR PRINCIPAL
+         ============================================
+         Envuelve todo el contenido de la página -->
     <div class="container">
+        
+        <!-- ============================================
+             SECCIÓN DE LOGO Y TÍTULO
+             ============================================
+             Muestra el logo y el título de bienvenida -->
         <div class="logo-section">
+            <!-- Logo del sistema -->
             <img src="/static/image/logo.jpg" alt="Logo">
+            <!-- Título principal de la página -->
             <h1>Bienvenido</h1>
         </div>
 
+        <!-- ============================================
+             FORMULARIO DE REGISTRO DE EQUIPOS
+             ============================================
+             ID: equipoForm - usado por JavaScript para capturar el envío
+             Los datos se envían mediante JavaScript (no submit tradicional) -->
         <form id="equipoForm">
+            
+            <!-- ============================================
+                 FILA 1: CÓDIGO Y TIPO DE EQUIPO
+                 ============================================ -->
             <div class="form-row">
+                <!-- Campo: Código del equipo -->
                 <div class="form-group">
                     <label for="codigo">Código</label>
+                    <!-- Input de texto obligatorio para el código único del equipo -->
                     <input type="text" id="codigo" name="codigo" required>
                 </div>
+                
+                <!-- Campo: Tipo de equipo -->
                 <div class="form-group">
                     <label for="tipo">Tipo de equipo</label>
+                    <!-- Select con opciones predefinidas de tipos de equipo -->
                     <select id="tipo" name="tipo" required>
                         <option value="">Seleccionar...</option>
                         <option value="Laptop">Laptop</option>
@@ -31,9 +75,18 @@
                 </div>
             </div>
 
+            <!-- ============================================
+                 FILA 2: MARCA Y MODELO
+                 ============================================
+                 FUNCIONALIDAD DINÁMICA: 
+                 - Al seleccionar marca, se cargan modelos automáticamente
+                 - Controlado por form.js -->
             <div class="form-row">
+                <!-- Campo: Marca del equipo -->
                 <div class="form-group">
                     <label for="marcas">Marcas</label>
+                    <!-- Select de marcas - al cambiar, dispara evento en form.js
+                         que carga los modelos correspondientes -->
                     <select id="marcas" name="marcas" required>
                         <option value="">Seleccionar...</option>
                         <option value="HP">HP</option>
@@ -43,17 +96,26 @@
                         <option value="Apple">Apple</option>
                     </select>
                 </div>
+                
+                <!-- Campo: Modelo del equipo -->
                 <div class="form-group">
                     <label for="modelo">Modelo</label>
+                    <!-- Select de modelos - se llena dinámicamente según la marca
+                         Inicialmente solo tiene la opción "Seleccionar..." -->
                     <select id="modelo" name="modelo" required>
                         <option value="">Seleccionar...</option>
                     </select>
                 </div>
             </div>
 
+            <!-- ============================================
+                 FILA 3: SISTEMA OPERATIVO Y ALMACENAMIENTO
+                 ============================================ -->
             <div class="form-row">
+                <!-- Campo: Sistema Operativo -->
                 <div class="form-group">
                     <label for="so">Sistema Operativo</label>
+                    <!-- Select con sistemas operativos más comunes -->
                     <select id="so" name="so" required>
                         <option value="">Seleccionar...</option>
                         <option value="Windows 10">Windows 10</option>
@@ -62,19 +124,32 @@
                         <option value="Linux">Linux</option>
                     </select>
                 </div>
+                
+                <!-- Campo: Almacenamiento en GB -->
                 <div class="form-group">
                     <label for="almacenamiento">Almacenamiento (GB)</label>
+                    <!-- Input numérico con valor mínimo de 1 GB
+                         Se autocompleta al seleccionar modelo (form.js) -->
                     <input type="number" id="almacenamiento" name="almacenamiento" min="1" required>
                 </div>
             </div>
 
+            <!-- ============================================
+                 FILA 4: RAM Y ESTADO
+                 ============================================ -->
             <div class="form-row">
+                <!-- Campo: Memoria RAM en GB -->
                 <div class="form-group">
                     <label for="ram">Ram</label>
+                    <!-- Input numérico con valor mínimo de 1 GB
+                         Se autocompleta al seleccionar modelo (form.js) -->
                     <input type="number" id="ram" name="ram" min="1" required>
                 </div>
+                
+                <!-- Campo: Estado actual del equipo -->
                 <div class="form-group">
                     <label for="estado">Estado</label>
+                    <!-- Select con estados posibles del equipo -->
                     <select id="estado" name="estado" required>
                         <option value="">Seleccionar...</option>
                         <option value="Activo">Activo</option>
@@ -85,19 +160,49 @@
                 </div>
             </div>
 
+            <!-- ============================================
+                 FILA 5: FECHA DE MANTENIMIENTO
+                 ============================================ -->
             <div class="form-row">
+                <!-- Campo: Fecha de mantenimiento -->
                 <div class="form-group">
                     <label for="mantenimiento">Fecha de Mantenimiento</label>
+                    <!-- Input de fecha con fecha mínima establecida
+                         min="{{ today }}" impide seleccionar fechas pasadas -->
                     <input type="date" id="mantenimiento" name="mantenimiento" required min="{{ today }}">
                 </div>
             </div>
 
+            <!-- ============================================
+                 BOTONES DE ACCIÓN
+                 ============================================ -->
+            <!-- Botón principal: Envía el formulario
+                 type="submit" dispara el evento submit del form -->
             <button type="submit">Registrar</button>
+            
+            <!-- Botón secundario: Redirige a la página de equipos
+                 type="button" evita que envíe el formulario
+                 onclick manejado por JavaScript -->
             <button type="button" id="verEquiposBtn" class="btn-secondary">Ver Equipos Registrados</button>
         </form>
+        
+        <!-- ============================================
+             CONTENEDOR DE MENSAJES
+             ============================================
+             Muestra mensajes de éxito o error después de registrar
+             Se llena dinámicamente con JavaScript -->
         <div id="mensaje" class="mensaje"></div>
     </div>
 
+    <!-- ============================================
+         IMPORTACIÓN DE JAVASCRIPT
+         ============================================
+         Archivo: form.js
+         Funciones:
+         - Carga dinámica de modelos según marca
+         - Autocompletado de RAM y almacenamiento
+         - Configuración de fecha mínima
+         - Manejo del envío del formulario -->
     <script src="{{ url_for('static', filename='js/form.js') }}"></script>
 </body>
 </html>
