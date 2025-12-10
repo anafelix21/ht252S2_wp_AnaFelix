@@ -5,9 +5,9 @@ import os
 
 app = Flask(__name__)
 
-app.config['MYSQL_HOST'] = 'prueba1111.csmouoomzfkk.us-east-1.rds.amazonaws.com'
+app.config['MYSQL_HOST'] = 'database-2.c5ks6s0kal3v.us-east-1.rds.amazonaws.com'
 app.config['MYSQL_USER'] = 'admin'
-app.config['MYSQL_PASSWORD'] = '987654321'
+app.config['MYSQL_PASSWORD'] = '123456789'
 app.config['MYSQL_DB'] = 'hackaton'
 
 mysql = MySQL(app)
