@@ -1,0 +1,38 @@
+# Archivos de historial y temporales
+.history/
+.qodo/
+
+# Scripts de despliegue
+deploy.sh
+DESPLIEGUE_EC2.txt
+
+# Archivos de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Archivos de entorno
+.env
+
+# Dependencias de Node
+node_modules/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Archivos de logs
+*.log
