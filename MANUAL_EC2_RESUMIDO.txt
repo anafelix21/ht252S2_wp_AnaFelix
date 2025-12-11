@@ -1,0 +1,283 @@
+================================================================================
+MANUAL RESUMIDO: AWS EC2 UBUNTU - COMANDOS EXACTOS (MÉTODO ZIP)
+================================================================================
+Proyecto: ht252S2_wp_AnaFelix
+Fecha: 11 de diciembre de 2025
+IP EC2: 98.87.67.95
+================================================================================
+
+
+PASO 1: CREAR INSTANCIA EC2
+----------------------------
+
+1. AWS Console → EC2 → Launch instance
+
+2. Configuración:
+   - Name: hackaton-flask-server
+   - AMI: Ubuntu Server 22.04 LTS
+   - Instance type: t2.micro
+   - Key pair: ani.pem (descargar y guardar en C:\Users\anacr\Downloads\)
+   - Security Group: Allow SSH (22), HTTP (80), HTTPS (443), Custom TCP (5000)
+   - Storage: 8 GB gp2
+
+3. Launch instance
+
+
+PASO 2: CONFIGURAR IP ELÁSTICA
+-------------------------------
+
+1. EC2 → Elastic IPs → Allocate Elastic IP address → Allocate
+
+2. Actions → Associate Elastic IP address
+   - Instance: hackaton-flask-server
+   - Associate
+
+IP Asignada: 98.87.67.95
+
+
+PASO 3: CONECTAR POR SSH
+-------------------------
+
+```powershell
+# En PowerShell (Windows)
+ssh -i "C:\Users\anacr\Downloads\ani.pem" ubuntu@98.87.67.95
+```
+
+
+PASO 4: ACTUALIZAR SISTEMA
+---------------------------
+
+```bash
+sudo apt update && sudo apt upgrade -y
+```
+
+
+PASO 5: INSTALAR DEPENDENCIAS DEL SISTEMA
+------------------------------------------
+
+```bash
+# Python 3 y herramientas
+sudo apt install -y python3 python3-pip python3-venv python3-dev
+
+# Librerías MySQL
+sudo apt install -y libmysqlclient-dev default-libmysqlclient-dev pkg-config
+
+# Compiladores
+sudo apt install -y build-essential gcc g++ make
+
+# Utilidades
+sudo apt install -y curl wget git unzip nano vim net-tools
+
+# Node.js 20.x
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Verificar instalaciones
+python3 --version
+pip3 --version
+node --version
+npm --version
+gcc --version
+```
+
+
+PASO 6: SUBIR PROYECTO COMPRIMIDO DESDE TU PC
+----------------------------------------------
+
+**EN TU PC (Windows PowerShell):**
+
+```powershell
+# Ir al directorio del proyecto
+cd C:\Users\anacr\OneDrive\Desktop\crud
+
+# Comprimir proyecto
+Compress-Archive -Path ht252S2_wp_AnaFelix -DestinationPath ht252S2_wp_AnaFelix.zip -Force
+
+# Subir a EC2
+scp -i "C:\Users\anacr\Downloads\ani.pem" ht252S2_wp_AnaFelix.zip ubuntu@98.87.67.95:/home/ubuntu/
+```
+
+**EN EC2:**
+
+```bash
+# Descomprimir
+cd /home/ubuntu
+unzip ht252S2_wp_AnaFelix.zip
+cd ht252S2_wp_AnaFelix
+
+# Verificar archivos
+ls -la
+```
+
+
+PASO 7: CREAR ENTORNO VIRTUAL
+------------------------------
+
+```bash
+cd /home/ubuntu/ht252S2_wp_AnaFelix
+python3 -m venv venv
+source venv/bin/activate
+```
+
+
+PASO 8: INSTALAR DEPENDENCIAS PYTHON
+-------------------------------------
+
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+
+PASO 9: ACTUALIZAR APP.PY CON CREDENCIALES RDS
+-----------------------------------------------
+
+```bash
+nano app.py
+```
+
+Actualizar:
+```python
+app.config['MYSQL_HOST'] = 'hackaton-mysql-db.c9akciq32.us-east-1.rds.amazonaws.com'
+app.config['MYSQL_USER'] = 'admin'
+app.config['MYSQL_PASSWORD'] = 'TuPasswordSeguro123!'
+app.config['MYSQL_DB'] = 'hackaton'
+```
+
+Guardar: Ctrl+O, Enter, Ctrl+X
+
+
+PASO 10: COMPILAR TAILWIND CSS
+-------------------------------
+
+```bash
+cd /home/ubuntu/ht252S2_wp_AnaFelix
+npm install
+npm run build:css
+```
+
+
+PASO 11: PROBAR APLICACIÓN
+---------------------------
+
+```bash
+source venv/bin/activate
+python3 app.py
+```
+
+Abrir navegador: http://98.87.67.95:5000
+
+Detener: Ctrl+C
+
+
+PASO 12: CONFIGURAR GUNICORN
+-----------------------------
+
+```bash
+# Crear archivo de servicio
+sudo nano /etc/systemd/system/hackaton-flask.service
+```
+
+Contenido:
+```ini
+[Unit]
+Description=Hackaton Flask Application
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/ht252S2_wp_AnaFelix
+Environment="PATH=/home/ubuntu/ht252S2_wp_AnaFelix/venv/bin"
+ExecStart=/home/ubuntu/ht252S2_wp_AnaFelix/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 app:app
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Guardar: Ctrl+O, Enter, Ctrl+X
+
+
+PASO 13: INICIAR SERVICIO
+--------------------------
+
+```bash
+# Recargar systemd
+sudo systemctl daemon-reload
+
+# Iniciar servicio
+sudo systemctl start hackaton-flask
+
+# Habilitar en arranque
+sudo systemctl enable hackaton-flask
+
+# Verificar estado
+sudo systemctl status hackaton-flask
+```
+
+
+PASO 14: CONFIGURAR FIREWALL
+-----------------------------
+
+```bash
+# Habilitar UFW
+sudo ufw allow 22
+sudo ufw allow 5000
+sudo ufw allow 80
+sudo ufw allow 443
+sudo ufw --force enable
+
+# Verificar estado
+sudo ufw status
+```
+
+
+PASO 15: VERIFICAR APLICACIÓN
+------------------------------
+
+Abrir navegador: http://98.87.67.95:5000
+
+Verificar:
+✅ Página principal carga
+✅ Puede ver equipos
+✅ Puede crear equipos
+✅ Puede editar equipos
+✅ Puede eliminar equipos
+
+
+COMANDOS ÚTILES DE MANTENIMIENTO
+---------------------------------
+
+```bash
+# Ver logs en tiempo real
+sudo journalctl -u hackaton-flask -f
+
+# Reiniciar servicio
+sudo systemctl restart hackaton-flask
+
+# Detener servicio
+sudo systemctl stop hackaton-flask
+
+# Ver estado
+sudo systemctl status hackaton-flask
+
+# Actualizar código (subir nuevo ZIP y descomprimir)
+# Luego reiniciar:
+sudo systemctl restart hackaton-flask
+```
+
+
+RESUMEN DE CONFIGURACIÓN
+-------------------------
+✅ EC2: Ubuntu 22.04, t2.micro, 98.87.67.95
+✅ Python: 3.10+ con venv
+✅ Flask: 3.0.0 con Flask-MySQLdb
+✅ RDS: hackaton-mysql-db.c9akciq32.us-east-1.rds.amazonaws.com
+✅ Gunicorn: 3 workers en puerto 5000
+✅ Systemd: Servicio habilitado en arranque
+✅ Firewall: UFW habilitado (22, 5000, 80, 443)
+✅ Node.js: 20.x con Tailwind CSS compilado
+
+
+================================================================================
+FIN DEL MANUAL RESUMIDO
+================================================================================

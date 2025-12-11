@@ -1,0 +1,117 @@
+================================================================================
+MANUAL RESUMIDO: AWS RDS MYSQL - COMANDOS EXACTOS
+================================================================================
+Proyecto: ht252S2_wp_AnaFelix
+Fecha: 11 de diciembre de 2025
+================================================================================
+
+
+PASO 1: CREAR INSTANCIA RDS
+----------------------------
+
+1. Ir a AWS Console → RDS → Create database
+
+2. Configuración:
+   - Engine: MySQL 8.0.35
+   - Template: Free tier
+   - DB instance identifier: hackaton-mysql-db
+   - Master username: admin
+   - Master password: TuPasswordSeguro123!
+   - DB instance class: db.t3.micro
+   - Storage: 20 GB gp2
+   - VPC: default
+   - Public access: YES
+   - VPC security group: Create new (rds-mysql-sg)
+   - Database name: hackaton
+
+3. Create database → Esperar 5-10 minutos
+
+
+PASO 2: CONFIGURAR SECURITY GROUP
+----------------------------------
+
+1. RDS → Databases → hackaton-mysql-db → Connectivity & security
+
+2. Copiar Security Group ID → EC2 → Security Groups → [tu-sg-id]
+
+3. Edit inbound rules → Add rule:
+   - Type: MySQL/Aurora
+   - Port: 3306
+   - Source: Anywhere-IPv4 (0.0.0.0/0)
+   - Description: MySQL desde cualquier lugar
+
+4. Save rules
+
+
+PASO 3: OBTENER ENDPOINT
+-------------------------
+
+1. RDS → Databases → hackaton-mysql-db → Connectivity & security
+
+2. Copiar Endpoint:
+   hackaton-mysql-db.c9akciq32.us-east-1.rds.amazonaws.com
+
+
+PASO 4: CONECTAR Y CREAR TABLAS
+--------------------------------
+
+Desde MySQL Workbench o terminal:
+
+```sql
+-- Conectar a RDS
+mysql -h hackaton-mysql-db.c9akciq32.us-east-1.rds.amazonaws.com -u admin -p
+
+-- Usar base de datos
+USE hackaton;
+
+-- Crear tabla equipos
+CREATE TABLE equipos (
+    equipo_id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_equipo VARCHAR(100) NOT NULL,
+    ciudad VARCHAR(100) NOT NULL,
+    estadio VARCHAR(100) NOT NULL,
+    fecha_fundacion DATE NOT NULL,
+    titulos_nacionales INT DEFAULT 0,
+    titulos_internacionales INT DEFAULT 0,
+    descripcion TEXT,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insertar datos de ejemplo
+INSERT INTO equipos (nombre_equipo, ciudad, estadio, fecha_fundacion, titulos_nacionales, titulos_internacionales, descripcion) VALUES
+('Real Madrid CF', 'Madrid', 'Santiago Bernabéu', '1902-03-06', 35, 14, 'Club de fútbol español más laureado'),
+('FC Barcelona', 'Barcelona', 'Camp Nou', '1899-11-29', 27, 5, 'Més que un club'),
+('Manchester United', 'Manchester', 'Old Trafford', '1878-01-01', 20, 3, 'Los Diablos Rojos');
+
+-- Verificar
+SELECT * FROM equipos;
+```
+
+
+PASO 5: CONFIGURAR APP.PY
+--------------------------
+
+Actualizar credenciales en app.py:
+
+```python
+app.config['MYSQL_HOST'] = 'hackaton-mysql-db.c9akciq32.us-east-1.rds.amazonaws.com'
+app.config['MYSQL_USER'] = 'admin'
+app.config['MYSQL_PASSWORD'] = 'TuPasswordSeguro123!'
+app.config['MYSQL_DB'] = 'hackaton'
+```
+
+
+RESUMEN DE CONFIGURACIÓN
+-------------------------
+✅ Endpoint: hackaton-mysql-db.c9akciq32.us-east-1.rds.amazonaws.com
+✅ Puerto: 3306
+✅ Usuario: admin
+✅ Password: TuPasswordSeguro123!
+✅ Base de datos: hackaton
+✅ Security Group: Permitir 0.0.0.0/0 en puerto 3306
+✅ Tabla equipos creada con datos de ejemplo
+
+
+================================================================================
+FIN DEL MANUAL RESUMIDO
+================================================================================
