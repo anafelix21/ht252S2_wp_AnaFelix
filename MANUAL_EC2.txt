@@ -893,11 +893,109 @@ Make version: GNU Make 4.3
 
 
 ============================================
-PARTE 5: CLONAR Y CONFIGURAR PROYECTO
+PARTE 5: SUBIR Y CONFIGURAR PROYECTO
 ============================================
 
-PASO 27: CLONAR REPOSITORIO DESDE GITHUB
------------------------------------------
+IMPORTANTE: Tienes DOS opciones para subir el proyecto a EC2:
+- Opción A: Subir archivo ZIP desde tu PC (RECOMENDADO)
+- Opción B: Clonar desde GitHub
+
+
+PASO 27-A: SUBIR PROYECTO COMPRIMIDO (ZIP) DESDE TU PC
+--------------------------------------------------------
+
+Esta opción es útil si tienes cambios locales que aún no están en GitHub.
+
+**EN TU PC (Windows PowerShell):**
+
+1. **Comprimir el proyecto:**
+
+```powershell
+# Navegar al directorio donde está el proyecto
+cd C:\Users\anacr\OneDrive\Desktop\crud
+
+# Comprimir proyecto (sin node_modules ni venv)
+Compress-Archive -Path ht252S2_wp_AnaFelix -DestinationPath ht252S2_wp_AnaFelix.zip -Force
+
+# Verificar que se creó el archivo
+Get-Item ht252S2_wp_AnaFelix.zip
+```
+
+ALTERNATIVA - Usar script de compresión (si existe):
+```powershell
+# Si tienes comprimir.ps1 en el proyecto
+.\comprimir.ps1
+```
+
+2. **Subir archivo ZIP a EC2 con SCP:**
+
+```powershell
+# Subir archivo comprimido a EC2
+scp -i "C:\Users\anacr\Downloads\ani.pem" ht252S2_wp_AnaFelix.zip ubuntu@98.87.67.95:/home/ubuntu/
+
+# Si hay problemas de permisos en Windows, usar:
+# scp -i "C:\Users\anacr\Downloads\ani.pem" -o StrictHostKeyChecking=no ht252S2_wp_AnaFelix.zip ubuntu@98.87.67.95:/home/ubuntu/
+```
+
+SALIDA ESPERADA:
+```
+ht252S2_wp_AnaFelix.zip         100%   3MB   1.2MB/s   00:02
+```
+
+**EN EC2 (Terminal SSH):**
+
+3. **Descomprimir proyecto:**
+
+```bash
+# Asegurarse de estar en el directorio home
+cd /home/ubuntu
+
+# Verificar que el archivo ZIP se subió correctamente
+ls -lh ht252S2_wp_AnaFelix.zip
+
+# Instalar unzip si no está instalado (ya debería estar)
+sudo apt install unzip -y
+
+# Descomprimir archivo
+unzip ht252S2_wp_AnaFelix.zip
+
+# Eliminar archivo ZIP después de descomprimir (opcional)
+rm ht252S2_wp_AnaFelix.zip
+
+# Entrar al directorio del proyecto
+cd ht252S2_wp_AnaFelix
+
+# Verificar archivos descomprimidos
+ls -la
+```
+
+SALIDA ESPERADA:
+```
+app.py
+database.sql
+MANUAL_EC2.txt
+MANUAL_RDS.txt
+README.md
+requirements.txt
+package.json
+static/
+templates/
+.gitignore
+```
+
+✅ **Ventajas de usar ZIP:**
+- No necesitas Git configurado en tu PC
+- Incluye cambios locales que no están en GitHub
+- Más rápido si tienes mala conexión de red
+- Control total sobre qué archivos subes
+
+
+PASO 27-B: CLONAR REPOSITORIO DESDE GITHUB (ALTERNATIVA)
+----------------------------------------------------------
+
+Esta opción es útil si todo tu código ya está en GitHub.
+
+**EN EC2 (Terminal SSH):**
 
 ```bash
 # Asegurarse de estar en el directorio home
@@ -927,7 +1025,6 @@ requirements.txt
 package.json
 static/
 templates/
-.env.example
 .gitignore
 ```
 
@@ -940,6 +1037,17 @@ Debe mostrar:
 ```
 * develop
 ```
+
+✅ **Ventajas de usar Git:**
+- Fácil actualización con `git pull`
+- Mantiene historial de cambios
+- Sincronizado con GitHub automáticamente
+
+
+RECOMENDACIÓN:
+--------------
+- **Primera vez:** Usar ZIP (PASO 27-A) para despliegue inicial
+- **Actualizaciones:** Usar Git (PASO 27-B) o `git pull` para actualizar
 
 
 PASO 28: CONFIGURAR APLICACIÓN FLASK
@@ -988,29 +1096,13 @@ grep "MYSQL_HOST" app.py
 Debe mostrar tu endpoint de RDS.
 
 
-ALTERNATIVA - Usar archivo .env (Más Seguro):
-----------------------------------------------
+NOTA IMPORTANTE:
+----------------
+La configuración de conexión a RDS se hace directamente en app.py.
+No es necesario usar archivos .env ya que las credenciales están
+codificadas en el archivo principal.
 
-```bash
-# Copiar ejemplo de .env
-cp .env.example .env
-
-# Editar .env
-nano .env
-```
-
-Configurar:
-```bash
-MYSQL_HOST=hackaton-mysql-db.c9akciq32.us-east-1.rds.amazonaws.com
-MYSQL_USER=admin
-MYSQL_PASSWORD=TuPasswordSeguro123!
-MYSQL_DB=hackaton
-PORT=5000
-```
-
-Guardar y cerrar (Ctrl+O, Enter, Ctrl+X)
-
-Modificar app.py para leer desde .env:
+Verificar que app.py contenga:
 ```python
 import os
 from dotenv import load_dotenv
