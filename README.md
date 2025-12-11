@@ -47,43 +47,63 @@ python app.py
 
 ### Opción 2: Producción AWS (EC2 + RDS)
 
-Ver archivo `DESPLIEGUE_EC2_RDS.txt` para instrucciones detalladas.
+**📚 Manuales de Despliegue AWS:**
+
+El proyecto incluye **dos manuales separados y completos**:
+
+1. **`MANUAL_RDS.txt`** - Configuración de Base de Datos
+   - ✅ Creación paso a paso de instancia RDS MySQL
+   - ✅ Configuración de Security Groups
+   - ✅ Creación de base de datos y tablas
+   - ✅ Backups automáticos y recuperación
+   - ✅ Monitoreo con CloudWatch
+   - ✅ Optimización de rendimiento
+   - ✅ Troubleshooting completo
+   - ✅ Costos y estimaciones
+
+2. **`MANUAL_EC2.txt`** - Configuración de Servidor
+   - ✅ Creación de instancia EC2 Ubuntu
+   - ✅ Asignación de IP Elástica
+   - ✅ Instalación COMPLETA de dependencias desde cero
+   - ✅ Configuración de Flask + Gunicorn
+   - ✅ Despliegue con systemd
+   - ✅ Configuración de firewall UFW
+   - ✅ Mantenimiento y actualización
+   - ✅ Troubleshooting completo
 
 **Arquitectura:**
-- **EC2 Ubuntu 22.04:** Aplicación Flask + Gunicorn
-- **RDS MySQL 8.0:** Base de datos (instancia separada)
-
-**Pasos Resumidos:**
-
-1. **Crear RDS MySQL en AWS:**
-   - DB identifier: hackaton-mysql-db
-   - Master username: admin
-   - Crear base de datos 'hackaton'
-
-2. **Configurar app.py con endpoint RDS:**
-```python
-app.config['MYSQL_HOST'] = 'tu-endpoint-rds.rds.amazonaws.com'
-app.config['MYSQL_USER'] = 'admin'
-app.config['MYSQL_PASSWORD'] = 'tu_password_rds'
+```
+┌─────────────────┐         ┌─────────────────┐
+│   AWS EC2       │         │   AWS RDS       │
+│   Ubuntu 22.04  │────────▶│   MySQL 8.0     │
+│   Flask +       │  Port   │                 │
+│   Gunicorn      │  3306   │   Base de Datos │
+│   98.87.67.95   │         │   (Separada)    │
+└─────────────────┘         └─────────────────┘
 ```
 
-3. **Desplegar en EC2:**
+**Pasos de Despliegue:**
+
+1. **Configurar RDS (MANUAL_RDS.txt):**
+   - Crear instancia RDS MySQL 8.0
+   - Configurar Security Groups
+   - Crear base de datos 'hackaton' y tabla 'equipos'
+
+2. **Configurar EC2 (MANUAL_EC2.txt):**
+   - Crear instancia EC2 Ubuntu 22.04
+   - Instalar todas las dependencias
+   - Clonar repositorio desde GitHub
+   - Configurar conexión a RDS
+   - Desplegar con Gunicorn + systemd
+
+**Acceso Rápido:**
 ```bash
-# Clonar repositorio
-git clone https://github.com/anafelix21/ht252S2_wp_AnaFelix.git
-cd ht252S2_wp_AnaFelix
+# Ver MANUAL_RDS.txt para configurar base de datos
+# Ver MANUAL_EC2.txt para configurar servidor
 
-# Instalar dependencias
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-
-# Configurar como servicio systemd
-sudo systemctl enable flask-app
-sudo systemctl start flask-app
+# Luego de la configuración:
+http://98.87.67.95:5000
 ```
-
-**Ver manual completo:** `DESPLIEGUE_EC2_RDS.txt`
 
 ## 📁 Estructura del Proyecto
 

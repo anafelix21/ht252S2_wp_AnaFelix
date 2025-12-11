@@ -1204,4 +1204,865 @@ SALIDA ESPERADA:
 5. Tabla 'equipos' existe en la base de datos
 
 
-CONTINÚA EN LA SIGUIENTE PARTE...
+============================================
+PARTE 6: PROBAR APLICACIÓN FLASK
+============================================
+
+PASO 33: EJECUTAR FLASK EN MODO DESARROLLO
+-------------------------------------------
+
+```bash
+# Asegurarse de estar en el directorio del proyecto
+cd /home/ubuntu/ht252S2_wp_AnaFelix
+
+# Verificar que el entorno virtual está activado
+# Debe mostrar (venv) en el prompt
+source venv/bin/activate
+
+# Ejecutar aplicación Flask
+python3 app.py
+```
+
+SALIDA ESPERADA:
+```
+ * Serving Flask app 'app'
+ * Debug mode: on
+WARNING: This is a development server. Do not use it in a production deployment.
+ * Running on http://0.0.0.0:5000
+Press CTRL+C to quit
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: xxx-xxx-xxx
+```
+
+✅ La aplicación está corriendo!
+
+
+PASO 34: PROBAR APLICACIÓN DESDE NAVEGADOR
+-------------------------------------------
+
+En tu PC, abrir navegador web:
+
+```
+http://98.87.67.95:5000
+```
+
+(Usar tu IP Elástica real)
+
+DEBE MOSTRAR:
+- Página de registro de equipos
+- Formulario con campos: código, tipo, marca, modelo, etc.
+- Botón "Registrar Equipo"
+
+PRUEBAS A REALIZAR:
+
+1. **Agregar nuevo equipo:**
+   - Código: LAB-TEST-001
+   - Tipo: Laptop
+   - Marca: Dell
+   - Modelo: Test Model
+   - SO: Windows 11
+   - Almacenamiento: 512
+   - RAM: 16
+   - Estado: Disponible
+   - Mantenimiento: 2025-12-31
+   - Click "Registrar Equipo"
+
+2. **Ver lista de equipos:**
+   - Navegar a: http://98.87.67.95:5000/equipos
+   - Debe mostrar tabla con equipos registrados
+
+3. **Editar equipo:**
+   - Click en botón "Editar" de algún equipo
+   - Modificar datos
+   - Guardar cambios
+
+4. **Eliminar equipo:**
+   - Click en botón "Eliminar"
+   - Confirmar eliminación
+
+✅ Si todas estas funciones trabajan correctamente, la aplicación funciona!
+
+Detener aplicación:
+```bash
+# En la terminal SSH, presionar:
+Ctrl + C
+```
+
+
+PASO 35: VERIFICAR LOGS Y ERRORES
+----------------------------------
+
+Si hay problemas, revisar logs en la terminal donde corre Flask.
+
+Errores comunes:
+
+ERROR: "Can't connect to MySQL server"
+```
+Verificar:
+- Endpoint de RDS correcto
+- Security Group de RDS permite EC2
+- Credenciales correctas
+```
+
+ERROR: "Table 'hackaton.equipos' doesn't exist"
+```
+Solución:
+- Conectar a RDS con MySQL Workbench
+- Crear tabla equipos (ver MANUAL_RDS.txt)
+```
+
+ERROR: "Access denied for user 'admin'@'x.x.x.x'"
+```
+Solución:
+- Verificar contraseña en app.py
+- Verificar que usuario 'admin' existe en RDS
+```
+
+
+============================================
+PARTE 7: CONFIGURAR GUNICORN COMO SERVICIO
+============================================
+
+PASO 36: CREAR ARCHIVO DE SERVICIO SYSTEMD
+-------------------------------------------
+
+```bash
+# Crear archivo de servicio
+sudo nano /etc/systemd/system/flask-app.service
+```
+
+Copiar el siguiente contenido:
+
+```ini
+[Unit]
+Description=Flask Application con Gunicorn conectado a AWS RDS
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/ht252S2_wp_AnaFelix
+Environment="PATH=/home/ubuntu/ht252S2_wp_AnaFelix/venv/bin"
+ExecStart=/home/ubuntu/ht252S2_wp_AnaFelix/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 app:app
+
+[Install]
+WantedBy=multi-user.target
+```
+
+EXPLICACIÓN LÍNEA POR LÍNEA:
+
+**[Unit]**
+- Description: Descripción del servicio
+- After=network.target: Iniciar después de que la red esté disponible
+
+**[Service]**
+- User=ubuntu: Ejecutar como usuario ubuntu
+- Group=www-data: Grupo www-data (estándar para servicios web)
+- WorkingDirectory: Directorio del proyecto
+- Environment="PATH=...": Usar Python del entorno virtual
+- ExecStart: Comando para iniciar Gunicorn
+  * --workers 3: 3 procesos worker (fórmula: (2 x CPU) + 1)
+  * --bind 0.0.0.0:5000: Escuchar en todas las interfaces, puerto 5000
+  * app:app: módulo:variable de Flask
+
+**[Install]**
+- WantedBy=multi-user.target: Iniciar en modo multi-usuario
+
+Guardar archivo:
+- Ctrl + O (Write Out)
+- Enter
+- Ctrl + X (Exit)
+
+
+PASO 37: INICIAR Y HABILITAR SERVICIO
+--------------------------------------
+
+```bash
+# Recargar daemon de systemd (para que lea el nuevo servicio)
+sudo systemctl daemon-reload
+
+# Iniciar el servicio
+sudo systemctl start flask-app
+
+# Habilitar inicio automático al arrancar el sistema
+sudo systemctl enable flask-app
+
+# Verificar estado del servicio
+sudo systemctl status flask-app
+```
+
+SALIDA ESPERADA:
+```
+● flask-app.service - Flask Application con Gunicorn conectado a AWS RDS
+     Loaded: loaded (/etc/systemd/system/flask-app.service; enabled; vendor preset: enabled)
+     Active: active (running) since Wed 2025-12-11 10:00:00 EST; 5s ago
+   Main PID: 12345 (gunicorn)
+      Tasks: 4 (limit: 1131)
+     Memory: 45.2M
+        CPU: 1.234s
+     CGroup: /system.slice/flask-app.service
+             ├─12345 /home/ubuntu/ht252S2_wp_AnaFelix/venv/bin/python3 /home/ubuntu/ht252S2_wp_AnaFelix/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 app:app
+             ├─12346 /home/ubuntu/ht252S2_wp_AnaFelix/venv/bin/python3 /home/ubuntu/ht252S2_wp_AnaFelix/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 app:app
+             ├─12347 /home/ubuntu/ht252S2_wp_AnaFelix/venv/bin/python3 /home/ubuntu/ht252S2_wp_AnaFelix/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 app:app
+             └─12348 /home/ubuntu/ht252S2_wp_AnaFelix/venv/bin/python3 /home/ubuntu/ht252S2_wp_AnaFelix/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 app:app
+
+Dec 11 10:00:00 ip-172-31-x-x systemd[1]: Started Flask Application con Gunicorn conectado a AWS RDS.
+Dec 11 10:00:01 ip-172-31-x-x gunicorn[12345]: [2025-12-11 10:00:01 +0000] [12345] [INFO] Starting gunicorn 21.2.0
+Dec 11 10:00:01 ip-172-31-x-x gunicorn[12345]: [2025-12-11 10:00:01 +0000] [12345] [INFO] Listening at: http://0.0.0.0:5000 (12345)
+Dec 11 10:00:01 ip-172-31-x-x gunicorn[12345]: [2025-12-11 10:00:01 +0000] [12345] [INFO] Using worker: sync
+Dec 11 10:00:01 ip-172-31-x-x gunicorn[12346]: [2025-12-11 10:00:01 +0000] [12346] [INFO] Booting worker with pid: 12346
+Dec 11 10:00:01 ip-172-31-x-x gunicorn[12347]: [2025-12-11 10:00:01 +0000] [12347] [INFO] Booting worker with pid: 12347
+Dec 11 10:00:01 ip-172-31-x-x gunicorn[12348]: [2025-12-11 10:00:01 +0000] [12348] [INFO] Booting worker with pid: 12348
+```
+
+✅ Indicators de éxito:
+- Active: **active (running)**
+- Tasks: 4 (1 master + 3 workers)
+- "Listening at: http://0.0.0.0:5000"
+
+
+SI EL SERVICIO FALLA:
+
+Ver logs completos:
+```bash
+sudo journalctl -u flask-app -f
+```
+
+Ver últimas 50 líneas:
+```bash
+sudo journalctl -u flask-app -n 50
+```
+
+Reiniciar servicio:
+```bash
+sudo systemctl restart flask-app
+```
+
+Detener servicio:
+```bash
+sudo systemctl stop flask-app
+```
+
+
+PASO 38: VERIFICAR QUE GUNICORN ESTÁ ESCUCHANDO
+------------------------------------------------
+
+```bash
+# Ver procesos de Gunicorn
+ps aux | grep gunicorn
+
+# Verificar puerto 5000
+sudo netstat -tulpn | grep 5000
+
+# O con ss:
+sudo ss -tulpn | grep 5000
+```
+
+SALIDA ESPERADA:
+```
+tcp        0      0 0.0.0.0:5000            0.0.0.0:*               LISTEN      12345/python3
+```
+
+Probar desde la misma instancia:
+```bash
+curl http://localhost:5000
+```
+
+Debe retornar HTML de la página principal.
+
+
+============================================
+PARTE 8: CONFIGURAR FIREWALL UFW
+============================================
+
+PASO 39: HABILITAR Y CONFIGURAR UFW
+------------------------------------
+
+```bash
+# Verificar estado actual de UFW
+sudo ufw status
+
+# Permitir SSH (IMPORTANTE: hacer esto PRIMERO)
+sudo ufw allow ssh
+
+# Permitir puerto 5000 (Flask/Gunicorn)
+sudo ufw allow 5000/tcp
+
+# Habilitar firewall
+sudo ufw --force enable
+
+# Verificar reglas configuradas
+sudo ufw status verbose
+```
+
+SALIDA ESPERADA:
+```
+Status: active
+Logging: on (low)
+Default: deny (incoming), allow (outgoing), disabled (routed)
+New profiles: skip
+
+To                         Action      From
+--                         ------      ----
+22/tcp                     ALLOW IN    Anywhere
+5000/tcp                   ALLOW IN    Anywhere
+22/tcp (v6)                ALLOW IN    Anywhere (v6)
+5000/tcp (v6)              ALLOW IN    Anywhere (v6)
+```
+
+⚠️ IMPORTANTE:
+- SIEMPRE permitir SSH (puerto 22) ANTES de habilitar UFW
+- Si no lo haces, te quedarás bloqueado fuera de la instancia
+- Si te bloqueas, deberás usar AWS Console para desactivar UFW
+
+
+REGLAS ADICIONALES (OPCIONAL):
+
+Si usas Nginx:
+```bash
+sudo ufw allow 'Nginx Full'
+# O específicamente:
+sudo ufw allow 80/tcp    # HTTP
+sudo ufw allow 443/tcp   # HTTPS
+```
+
+Ver aplicaciones disponibles:
+```bash
+sudo ufw app list
+```
+
+Eliminar regla:
+```bash
+sudo ufw delete allow 5000/tcp
+```
+
+Reiniciar UFW:
+```bash
+sudo ufw reload
+```
+
+
+PASO 40: VERIFICAR CONECTIVIDAD
+--------------------------------
+
+Desde tu PC, probar conexión:
+
+```
+http://98.87.67.95:5000
+```
+
+Debe cargar la aplicación normalmente.
+
+Si no carga:
+1. Verificar Security Group en AWS (puerto 5000 abierto)
+2. Verificar UFW permite puerto 5000
+3. Verificar Gunicorn está corriendo: `sudo systemctl status flask-app`
+4. Ver logs: `sudo journalctl -u flask-app -f`
+
+
+============================================
+PARTE 9: ACTUALIZAR CÓDIGO DESDE GITHUB
+============================================
+
+PASO 41: PROCESO DE ACTUALIZACIÓN
+----------------------------------
+
+Cuando hagas cambios en tu código y los subas a GitHub:
+
+```bash
+# Conectar a EC2
+ssh -i "C:\Users\anacr\Downloads\ani.pem" ubuntu@98.87.67.95
+
+# Navegar al proyecto
+cd /home/ubuntu/ht252S2_wp_AnaFelix
+
+# Activar entorno virtual (si vas a instalar nuevas dependencias)
+source venv/bin/activate
+
+# Descargar cambios desde GitHub
+git pull origin develop
+
+# Si hay nuevas dependencias, instalarlas:
+pip install -r requirements.txt
+
+# Reiniciar servicio Flask
+sudo systemctl restart flask-app
+
+# Verificar que reinició correctamente
+sudo systemctl status flask-app
+
+# Ver logs en tiempo real
+sudo journalctl -u flask-app -f
+```
+
+VERIFICAR CAMBIOS:
+- Abrir navegador: http://98.87.67.95:5000
+- Verificar que los cambios se aplicaron
+
+
+AUTOMATIZAR CON SCRIPT:
+------------------------
+
+Crear script de actualización:
+
+```bash
+nano ~/update-app.sh
+```
+
+Contenido:
+```bash
+#!/bin/bash
+
+echo "🔄 Actualizando aplicación Flask..."
+
+cd /home/ubuntu/ht252S2_wp_AnaFelix
+
+# Descargar cambios
+echo "📥 Descargando cambios desde GitHub..."
+git pull origin develop
+
+# Activar entorno virtual e instalar dependencias
+echo "📦 Instalando dependencias..."
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Reiniciar servicio
+echo "🔄 Reiniciando servicio..."
+sudo systemctl restart flask-app
+
+# Esperar 2 segundos
+sleep 2
+
+# Verificar estado
+echo "✅ Estado del servicio:"
+sudo systemctl status flask-app --no-pager
+
+echo "✅ Actualización completada!"
+echo "🌐 Aplicación disponible en: http://98.87.67.95:5000"
+```
+
+Hacer ejecutable:
+```bash
+chmod +x ~/update-app.sh
+```
+
+Usar:
+```bash
+~/update-app.sh
+```
+
+
+============================================
+PARTE 10: MONITOREO Y MANTENIMIENTO
+============================================
+
+PASO 42: COMANDOS ÚTILES DE MANTENIMIENTO
+------------------------------------------
+
+**Ver logs del servicio Flask:**
+```bash
+# Logs en tiempo real
+sudo journalctl -u flask-app -f
+
+# Últimas 100 líneas
+sudo journalctl -u flask-app -n 100
+
+# Logs de hoy
+sudo journalctl -u flask-app --since today
+
+# Logs de las últimas 2 horas
+sudo journalctl -u flask-app --since "2 hours ago"
+```
+
+**Gestionar servicio:**
+```bash
+# Ver estado
+sudo systemctl status flask-app
+
+# Iniciar
+sudo systemctl start flask-app
+
+# Detener
+sudo systemctl stop flask-app
+
+# Reiniciar
+sudo systemctl restart flask-app
+
+# Recargar configuración (sin reiniciar)
+sudo systemctl reload flask-app
+
+# Deshabilitar inicio automático
+sudo systemctl disable flask-app
+
+# Habilitar inicio automático
+sudo systemctl enable flask-app
+```
+
+**Monitorear recursos:**
+```bash
+# Ver uso de CPU y memoria
+htop
+
+# Ver procesos de Python/Gunicorn
+ps aux | grep gunicorn
+
+# Ver puertos abiertos
+sudo netstat -tulpn
+
+# Ver espacio en disco
+df -h
+
+# Ver uso de disco por directorio
+du -sh /home/ubuntu/ht252S2_wp_AnaFelix
+
+# Ver memoria
+free -h
+```
+
+**Limpiar espacio:**
+```bash
+# Limpiar paquetes no necesarios
+sudo apt autoremove -y
+sudo apt autoclean
+
+# Limpiar logs antiguos (más de 7 días)
+sudo journalctl --vacuum-time=7d
+
+# Ver tamaño de logs
+sudo du -sh /var/log/journal/
+```
+
+
+PASO 43: CONFIGURAR LOGROTATE
+------------------------------
+
+Evitar que los logs crezcan indefinidamente:
+
+```bash
+# Ver configuración actual de journald
+sudo nano /etc/systemd/journald.conf
+```
+
+Descomentar y modificar:
+```
+SystemMaxUse=100M
+SystemMaxFileSize=10M
+```
+
+Reiniciar journald:
+```bash
+sudo systemctl restart systemd-journald
+```
+
+
+PASO 44: CREAR BACKUP DE LA APLICACIÓN
+---------------------------------------
+
+```bash
+# Crear directorio de backups
+mkdir -p /home/ubuntu/backups
+
+# Crear backup
+cd /home/ubuntu
+tar -czf backups/app-backup-$(date +%Y%m%d-%H%M%S).tar.gz \
+    ht252S2_wp_AnaFelix/ \
+    --exclude='ht252S2_wp_AnaFelix/venv' \
+    --exclude='ht252S2_wp_AnaFelix/__pycache__' \
+    --exclude='ht252S2_wp_AnaFelix/.git'
+
+# Ver backups
+ls -lh backups/
+```
+
+RESTAURAR BACKUP:
+```bash
+cd /home/ubuntu
+tar -xzf backups/app-backup-20251211-100000.tar.gz
+```
+
+
+PASO 45: MONITOREO CON CLOUDWATCH
+----------------------------------
+
+AWS CloudWatch captura automáticamente métricas de EC2:
+- CPU utilization
+- Disk read/write
+- Network in/out
+
+Ver en AWS Console:
+1. EC2 > Instances > hackaton-flask-app
+2. Pestaña "Monitoring"
+3. Ver gráficas de CPU, red, disco
+
+
+CONFIGURAR ALARMAS:
+
+1. CloudWatch > Alarms > Create alarm
+
+2. Alarma de CPU:
+   - Metric: EC2 > Per-Instance Metrics > CPUUtilization
+   - Threshold: > 80%
+   - Period: 5 minutes
+   - Action: Email notification
+
+3. Alarma de disco:
+   - Metric: EBS > Per-Volume Metrics > VolumeReadOps
+   - Similar configuración
+
+
+============================================
+PARTE 11: TROUBLESHOOTING
+============================================
+
+PROBLEMA 1: Servicio no inicia
+-------------------------------
+```bash
+# Ver error específico
+sudo journalctl -u flask-app -n 50
+
+# Verificar permisos
+ls -la /home/ubuntu/ht252S2_wp_AnaFelix/
+
+# Verificar que venv existe
+ls -la /home/ubuntu/ht252S2_wp_AnaFelix/venv/
+
+# Probar manualmente
+cd /home/ubuntu/ht252S2_wp_AnaFelix
+source venv/bin/activate
+gunicorn --workers 3 --bind 0.0.0.0:5000 app:app
+```
+
+PROBLEMA 2: 502 Bad Gateway
+----------------------------
+```bash
+# Verificar que Gunicorn está corriendo
+sudo systemctl status flask-app
+
+# Verificar puerto 5000
+sudo netstat -tulpn | grep 5000
+
+# Reiniciar servicio
+sudo systemctl restart flask-app
+```
+
+PROBLEMA 3: Aplicación lenta
+-----------------------------
+```bash
+# Ver uso de recursos
+htop
+
+# Aumentar workers de Gunicorn
+sudo nano /etc/systemd/system/flask-app.service
+# Cambiar --workers 3 a --workers 5
+
+sudo systemctl daemon-reload
+sudo systemctl restart flask-app
+```
+
+PROBLEMA 4: No se conecta a RDS
+--------------------------------
+```bash
+# Probar conexión a RDS
+telnet hackaton-mysql-db.c9akciq32.us-east-1.rds.amazonaws.com 3306
+
+# Ver Security Group de RDS en AWS Console
+# Debe permitir puerto 3306 desde Security Group de EC2
+
+# Verificar credenciales en app.py
+grep "MYSQL_" app.py
+```
+
+PROBLEMA 5: Error "ModuleNotFoundError"
+----------------------------------------
+```bash
+# Activar entorno virtual
+cd /home/ubuntu/ht252S2_wp_AnaFelix
+source venv/bin/activate
+
+# Reinstalar dependencias
+pip install -r requirements.txt
+
+# Reiniciar servicio
+sudo systemctl restart flask-app
+```
+
+
+============================================
+PARTE 12: OPTIMIZACIÓN
+============================================
+
+PASO 46: OPTIMIZAR GUNICORN
+----------------------------
+
+**Aumentar Workers:**
+
+Fórmula: (2 x CPU cores) + 1
+
+Para t2.micro (1 CPU):
+```
+--workers 3
+```
+
+Para t3.medium (2 CPU):
+```
+--workers 5
+```
+
+Editar servicio:
+```bash
+sudo nano /etc/systemd/system/flask-app.service
+
+# Cambiar línea ExecStart
+ExecStart=/home/ubuntu/ht252S2_wp_AnaFelix/venv/bin/gunicorn --workers 5 --bind 0.0.0.0:5000 app:app
+
+sudo systemctl daemon-reload
+sudo systemctl restart flask-app
+```
+
+**Agregar Timeout:**
+```bash
+ExecStart=.../gunicorn --workers 3 --bind 0.0.0.0:5000 --timeout 60 app:app
+```
+
+**Usar Threads:**
+```bash
+ExecStart=.../gunicorn --workers 3 --threads 2 --bind 0.0.0.0:5000 app:app
+```
+
+
+PASO 47: CONFIGURAR NGINX COMO REVERSE PROXY (OPCIONAL)
+--------------------------------------------------------
+
+VENTAJAS:
+- Mejor manejo de archivos estáticos
+- Soporte SSL/TLS
+- Compresión gzip
+- Caché de respuestas
+
+```bash
+# Instalar Nginx
+sudo apt install -y nginx
+
+# Crear configuración
+sudo nano /etc/nginx/sites-available/flask-app
+```
+
+Contenido:
+```nginx
+server {
+    listen 80;
+    server_name 98.87.67.95;
+
+    # Logs
+    access_log /var/log/nginx/flask-app-access.log;
+    error_log /var/log/nginx/flask-app-error.log;
+
+    # Archivos estáticos
+    location /static {
+        alias /home/ubuntu/ht252S2_wp_AnaFelix/static;
+    }
+
+    # Proxy a Gunicorn
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Activar configuración:
+```bash
+sudo ln -s /etc/nginx/sites-available/flask-app /etc/nginx/sites-enabled/
+sudo rm /etc/nginx/sites-enabled/default
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+Cambiar Gunicorn a localhost:
+```bash
+sudo nano /etc/systemd/system/flask-app.service
+
+# Cambiar --bind 0.0.0.0:5000 a --bind 127.0.0.1:5000
+ExecStart=.../gunicorn --workers 3 --bind 127.0.0.1:5000 app:app
+
+sudo systemctl daemon-reload
+sudo systemctl restart flask-app
+```
+
+Acceder ahora en puerto 80:
+```
+http://98.87.67.95
+```
+
+
+============================================
+CHECKLIST DE CONFIGURACIÓN EC2
+============================================
+
+Configuración Inicial:
+[ ] Crear instancia EC2 Ubuntu 22.04
+[ ] Asignar IP Elástica
+[ ] Configurar Security Group (SSH, 5000)
+[ ] Descargar y guardar clave SSH (.pem)
+[ ] Conectar vía SSH
+
+Instalación de Dependencias:
+[ ] Actualizar sistema (apt update/upgrade)
+[ ] Instalar herramientas básicas (curl, wget, etc.)
+[ ] Instalar Python 3 completo
+[ ] Instalar herramientas de compilación
+[ ] Instalar librerías MySQL
+[ ] Instalar Git
+[ ] Instalar Node.js/npm (opcional)
+
+Configuración de Aplicación:
+[ ] Clonar repositorio desde GitHub
+[ ] Configurar app.py con endpoint RDS
+[ ] Crear entorno virtual Python
+[ ] Instalar requirements.txt
+[ ] Probar conexión a RDS
+[ ] Probar aplicación (python3 app.py)
+
+Despliegue en Producción:
+[ ] Crear servicio systemd para Gunicorn
+[ ] Iniciar y habilitar servicio
+[ ] Configurar firewall UFW
+[ ] Verificar aplicación en navegador
+[ ] Probar todas las funciones CRUD
+
+Mantenimiento:
+[ ] Configurar backup automático
+[ ] Configurar logrotate
+[ ] Configurar CloudWatch Alarms
+[ ] Documentar proceso de actualización
+
+
+============================================
+✅ EC2 CONFIGURADO COMPLETAMENTE
+============================================
+
+¡Tu aplicación Flask está desplegada en EC2!
+
+ACCESO:
+- Aplicación: http://98.87.67.95:5000
+- SSH: ssh -i ani.pem ubuntu@98.87.67.95
+
+PRÓXIMOS PASOS:
+1. Configurar dominio personalizado (opcional)
+2. Configurar SSL/TLS con Let's Encrypt (opcional)
+3. Configurar CI/CD con GitHub Actions (opcional)
+4. Implementar sistema de logs centralizado (opcional)
+
+RECURSOS ADICIONALES:
+- AWS EC2 Documentation: https://docs.aws.amazon.com/ec2/
+- Gunicorn Documentation: https://docs.gunicorn.org/
+- Flask Documentation: https://flask.palletsprojects.com/
+- Nginx Documentation: https://nginx.org/en/docs/
+
+============================================
+FIN DEL MANUAL EC2
+============================================
