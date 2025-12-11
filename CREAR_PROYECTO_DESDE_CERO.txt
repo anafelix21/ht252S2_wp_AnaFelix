@@ -719,7 +719,51 @@ http://tu-ip-elastica:5000
 
 
 ============================================
-PARTE 13: CONFIGURAR COMO SERVICIO
+PARTE 13: CONFIGURAR MYSQL PARA MYSQL WORKBENCH (OPCIONAL)
+============================================
+
+Si quieres conectar desde MySQL Workbench en tu PC:
+
+# 1. Editar configuración de MySQL
+sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
+
+# Buscar y cambiar:
+bind-address = 127.0.0.1
+# Por:
+bind-address = 0.0.0.0
+
+# Guardar: Ctrl+O, Enter, Ctrl+X
+
+# 2. Crear usuario remoto
+sudo mysql
+
+CREATE USER 'admin'@'%' IDENTIFIED BY 'password_seguro';
+GRANT ALL PRIVILEGES ON mi_proyecto.* TO 'admin'@'%';
+FLUSH PRIVILEGES;
+EXIT;
+
+# 3. Reiniciar MySQL
+sudo systemctl restart mysql
+
+# 4. Abrir puerto 3306 en Security Group de AWS
+# En AWS Console > EC2 > Security Groups > Edit inbound rules
+# Agregar:
+#   Type: MYSQL/Aurora
+#   Port: 3306
+#   Source: My IP (tu IP específica)
+
+# 5. Abrir puerto en firewall
+sudo ufw allow from TU_IP_ESPECIFICA to any port 3306
+
+# 6. En MySQL Workbench:
+# - Hostname: tu-ip-elastica
+# - Port: 3306
+# - Username: admin
+# - Password: password_seguro
+
+
+============================================
+PARTE 14: CONFIGURAR COMO SERVICIO
 ============================================
 
 # Crear servicio systemd
