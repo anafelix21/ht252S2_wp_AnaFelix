@@ -25,13 +25,13 @@ app = Flask(__name__)
 # ============================================
 # CONFIGURACIÓN DE LA BASE DE DATOS MySQL
 # ============================================
-# Estas configuraciones establecen la conexión con la base de datos MySQL en AWS RDS
-# MYSQL_HOST: Dirección del servidor de base de datos en AWS
-app.config['MYSQL_HOST'] = 'database-2.c5ks6s0kal3v.us-east-1.rds.amazonaws.com'
-# MYSQL_USER: Usuario con permisos para acceder a la base de datos
-app.config['MYSQL_USER'] = 'admin'
-# MYSQL_PASSWORD: Contraseña del usuario de la base de datos
-app.config['MYSQL_PASSWORD'] = '123456789'
+# Estas configuraciones establecen la conexión con la base de datos MySQL local en EC2
+# MYSQL_HOST: localhost porque MySQL estará en la misma instancia EC2
+app.config['MYSQL_HOST'] = 'localhost'
+# MYSQL_USER: Usuario root de MySQL local
+app.config['MYSQL_USER'] = 'root'
+# MYSQL_PASSWORD: Contraseña del usuario root (cambiar según tu configuración)
+app.config['MYSQL_PASSWORD'] = 'tu_password_mysql'
 # MYSQL_DB: Nombre de la base de datos específica a usar
 app.config['MYSQL_DB'] = 'hackaton'
 
