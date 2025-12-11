@@ -94,7 +94,7 @@ cd C:\Users\anacr\OneDrive\Desktop\crud
 Compress-Archive -Path ht252S2_wp_AnaFelix -DestinationPath ht252S2_wp_AnaFelix.zip -Force
 
 # Subir a EC2
-scp -i "C:\Users\anacr\Downloads\ani.pem" ht252S2_wp_AnaFelix.zip ubuntu@98.87.67.95:/home/ubuntu/
+scp -i "C:\Users\Lab31\Downloads\hacthonana.pem" "C:\Users\Lab31\Desktop\ana\ht252S2_wp_AnaFelix.zip" ubuntu@98.92.116.13:/home/ubuntu/
 ```
 
 **EN EC2:**
