@@ -1,0 +1,1207 @@
+============================================
+MANUAL DE CONFIGURACIÓN AWS EC2 + FLASK
+GUÍA COMPLETA PARA APLICACIÓN WEB
+============================================
+
+DESCRIPCIÓN:
+Este manual cubre EXCLUSIVAMENTE la configuración de AWS EC2
+para desplegar la aplicación Flask conectada a RDS.
+
+ALCANCE:
+✅ Creación de instancia EC2 Ubuntu
+✅ Configuración de Security Groups
+✅ Asignación de IP Elástica
+✅ Instalación COMPLETA de dependencias del sistema
+✅ Instalación de Python y herramientas
+✅ Configuración de Flask application
+✅ Despliegue con Gunicorn y systemd
+✅ Configuración de firewall
+✅ Monitoreo y mantenimiento
+
+REQUISITOS PREVIOS:
+- Cuenta AWS activa
+- RDS MySQL configurado (ver MANUAL_RDS.txt)
+- Clave SSH (.pem) descargada
+- Conocimientos básicos de Linux/Ubuntu
+
+
+============================================
+PARTE 1: CREAR INSTANCIA EC2
+============================================
+
+PASO 1: INICIAR CREACIÓN DE INSTANCIA
+--------------------------------------
+
+1. Iniciar sesión en AWS Console: https://console.aws.amazon.com/
+
+2. En el buscador superior, escribir "EC2"
+
+3. Click en "EC2" (Elastic Compute Cloud)
+
+4. En el panel izquierdo, click en "Instances"
+
+5. Click en el botón naranja "Launch instances"
+
+
+PASO 2: CONFIGURAR NOMBRE Y TAGS
+---------------------------------
+
+Name and tags:
+
+Name:
+┌─────────────────────────────────┐
+│ hackaton-flask-app              │
+└─────────────────────────────────┘
+
+EXPLICACIÓN:
+- Nombre descriptivo de la instancia
+- Ayuda a identificarla en el dashboard
+
+Tags adicionales (opcional):
+- Key: Project, Value: Hackaton
+- Key: Environment, Value: Production
+- Key: Owner, Value: Tu Nombre
+
+
+PASO 3: SELECCIONAR IMAGEN DEL SISTEMA OPERATIVO (AMI)
+-------------------------------------------------------
+
+Application and OS Images (Amazon Machine Image):
+
+Quick Start:
+- Amazon Linux
+- macOS
+- Ubuntu ✓ (SELECCIONAR ESTE)
+- Windows
+- Red Hat
+
+Ubuntu AMI:
+┌──────────────────────────────────────────────────┐
+│ Ubuntu Server 22.04 LTS (HVM), SSD Volume Type  │
+│ ✅ Free tier eligible                            │
+│ 64-bit (x86)                                     │
+└──────────────────────────────────────────────────┘
+
+EXPLICACIÓN:
+- Ubuntu 22.04 LTS: Soporte a largo plazo hasta 2027
+- HVM: Hardware Virtual Machine (mejor rendimiento)
+- SSD: Más rápido que almacenamiento magnético
+- Free tier eligible: Sin costo el primer año
+
+Architecture:
+○ 64-bit (x86) ✓
+○ 64-bit (Arm)
+
+
+PASO 4: SELECCIONAR TIPO DE INSTANCIA
+--------------------------------------
+
+Instance type:
+
+Comparación de tipos:
+
+┌──────────────┬──────┬────────┬───────────┬───────────┐
+│ Tipo         │ vCPU │ Memory │ Storage   │ Costo/mes │
+├──────────────┼──────┼────────┼───────────┼───────────┤
+│ t2.micro ✓   │  1   │ 1 GB   │ EBS only  │ Gratis*   │
+│ t2.small     │  1   │ 2 GB   │ EBS only  │ ~$17      │
+│ t2.medium    │  2   │ 4 GB   │ EBS only  │ ~$34      │
+│ t3.micro     │  2   │ 1 GB   │ EBS only  │ ~$7.5     │
+│ t3.small     │  2   │ 2 GB   │ EBS only  │ ~$15      │
+│ t3.medium    │  2   │ 4 GB   │ EBS only  │ ~$30      │
+└──────────────┴──────┴────────┴───────────┴───────────┘
+
+* Gratis primer año con AWS Free Tier (750 horas/mes)
+
+SELECCIONAR:
+┌─────────────────────────────────┐
+│ t2.micro (1 vCPU, 1 GB RAM) ✓   │
+│ Free tier eligible              │
+└─────────────────────────────────┘
+
+RECOMENDACIONES POR USO:
+- Desarrollo/Pruebas: t2.micro (gratis)
+- Producción pequeña: t3.small o t3.medium
+- Producción media: t3.large o t3.xlarge
+
+
+PASO 5: CONFIGURAR PAR DE CLAVES (KEY PAIR)
+--------------------------------------------
+
+Key pair (login):
+
+Opciones:
+1. Create new key pair (crear nueva)
+2. Choose an existing key pair (usar existente)
+
+SI YA TIENES UNA CLAVE:
+┌─────────────────────────────────┐
+│ ani (o el nombre de tu clave)   │
+└─────────────────────────────────┘
+- Seleccionar de la lista
+- Pasar al siguiente paso
+
+SI NECESITAS CREAR NUEVA:
+
+Click "Create new key pair"
+
+Key pair name:
+┌─────────────────────────────────┐
+│ hackaton-key                    │
+└─────────────────────────────────┘
+
+Key pair type:
+○ RSA ✓ (RECOMENDADO)
+○ ED25519
+
+Private key file format:
+○ .pem ✓ (para Linux/Mac/Windows PowerShell)
+○ .ppk (para PuTTY en Windows)
+
+Click "Create key pair"
+
+IMPORTANTE:
+⚠️ Guardar el archivo .pem en lugar SEGURO
+⚠️ Solo se descarga UNA VEZ
+⚠️ Si lo pierdes, NO podrás acceder a la instancia
+
+Ubicación recomendada:
+C:\Users\TuUsuario\Downloads\hackaton-key.pem
+
+
+PASO 6: CONFIGURAR NETWORK SETTINGS
+------------------------------------
+
+Network settings:
+
+VPC:
+┌─────────────────────────────────┐
+│ Default VPC                     │
+└─────────────────────────────────┘
+
+Subnet:
+┌─────────────────────────────────┐
+│ No preference (default subnet)  │
+└─────────────────────────────────┘
+
+Auto-assign public IP:
+○ Enable ✓ (SELECCIONAR)
+○ Disable
+
+EXPLICACIÓN:
+- Necesitamos IP pública para acceder desde internet
+- Luego asignaremos IP Elástica permanente
+
+Firewall (security groups):
+○ Create security group ✓
+
+Security group name:
+┌─────────────────────────────────┐
+│ flask-app-sg                    │
+└─────────────────────────────────┘
+
+Description:
+┌─────────────────────────────────┐
+│ Security group for Flask app    │
+└─────────────────────────────────┘
+
+INBOUND SECURITY GROUP RULES:
+
+Regla 1 - SSH (Acceso remoto):
+┌──────────────┬──────────┬───────────┬──────────────┐
+│ Type         │ Protocol │ Port Range│ Source type  │
+├──────────────┼──────────┼───────────┼──────────────┤
+│ SSH          │ TCP      │ 22        │ My IP ✓      │
+└──────────────┴──────────┴───────────┴──────────────┘
+
+IMPORTANTE:
+- "My IP" limita acceso SSH solo a tu IP actual
+- Más seguro que "Anywhere" (0.0.0.0/0)
+- Si tu IP cambia, deberás actualizar Security Group
+
+Regla 2 - HTTP (para Nginx, si lo usas):
+┌──────────────┬──────────┬───────────┬──────────────┐
+│ Type         │ Protocol │ Port Range│ Source type  │
+├──────────────┼──────────┼───────────┼──────────────┤
+│ HTTP         │ TCP      │ 80        │ Anywhere     │
+└──────────────┴──────────┴───────────┴──────────────┘
+
+Click "Add security group rule" para agregar:
+
+Regla 3 - Flask Application (Puerto Custom):
+┌──────────────┬──────────┬───────────┬──────────────┐
+│ Type         │ Protocol │ Port Range│ Source type  │
+├──────────────┼──────────┼───────────┼──────────────┤
+│ Custom TCP   │ TCP      │ 5000      │ Anywhere     │
+└──────────────┴──────────┴───────────┴──────────────┘
+
+EXPLICACIÓN:
+- Puerto 5000: Flask/Gunicorn escuchará aquí
+- Anywhere: Permite acceso desde cualquier IP
+- Necesario para que usuarios accedan a la aplicación
+
+
+PASO 7: CONFIGURAR ALMACENAMIENTO
+----------------------------------
+
+Configure storage:
+
+Root volume:
+┌─────────────────────────────────┐
+│ 1 x 8 GB gp3 (default)          │
+└─────────────────────────────────┘
+
+RECOMENDACIÓN:
+Cambiar a 10-20 GB para mayor espacio:
+
+Size (GiB):
+┌─────────────────────────────────┐
+│ 15                              │
+└─────────────────────────────────┘
+
+Volume type:
+┌─────────────────────────────────┐
+│ gp3 (General Purpose SSD) ✓     │
+└─────────────────────────────────┘
+
+Delete on termination:
+☑ Yes ✓ (borrar volumen si eliminas instancia)
+
+EXPLICACIÓN:
+- gp3: Mejor rendimiento y precio que gp2
+- 15 GB suficiente para aplicación + logs
+- 30 GB gratis con free tier
+
+Add new volume (opcional):
+- No necesario para esta aplicación
+
+
+PASO 8: ADVANCED DETAILS (OPCIONAL)
+------------------------------------
+
+Puedes expandir "Advanced details" si necesitas:
+
+- IAM instance profile: Para dar permisos AWS a la instancia
+- User data: Scripts que se ejecutan al iniciar (útil para automatización)
+- Monitoring: CloudWatch detailed monitoring ($$$)
+
+Para este tutorial, dejamos todo por defecto.
+
+
+PASO 9: REVISAR Y LANZAR
+-------------------------
+
+Summary (panel derecho):
+
+Revisar configuración:
+✓ Name: hackaton-flask-app
+✓ AMI: Ubuntu 22.04 LTS
+✓ Instance type: t2.micro
+✓ Key pair: ani (o tu clave)
+✓ Network: Default VPC, Public IP enabled
+✓ Security group: flask-app-sg (SSH, HTTP, 5000)
+✓ Storage: 15 GB gp3
+
+Number of instances:
+┌─────────────────────────────────┐
+│ 1                               │
+└─────────────────────────────────┘
+
+Verificar costos estimados:
+┌─────────────────────────────────┐
+│ Free tier: $0.00/month          │
+│ (750 hours/month for 12 months) │
+└─────────────────────────────────┘
+
+Click "Launch instance" (botón naranja)
+
+Esperar 30-60 segundos mientras se crea la instancia.
+
+Ver mensaje de éxito:
+✅ Successfully initiated launch of instance i-0123456789abcdef
+
+Click "View all instances"
+
+
+PASO 10: VERIFICAR INSTANCIA CREADA
+------------------------------------
+
+En EC2 Dashboard > Instances:
+
+Verificar:
+- Name: hackaton-flask-app
+- Instance state: Running (tarda ~1 minuto)
+- Status check: 2/2 checks passed (tarda ~2 minutos)
+
+Anotar información:
+- Instance ID: i-0123456789abcdef
+- Public IPv4 address: 54.123.45.67 (temporal)
+- Private IPv4 address: 172.31.x.x
+
+
+============================================
+PARTE 2: ASIGNAR IP ELÁSTICA
+============================================
+
+PASO 11: CREAR IP ELÁSTICA
+---------------------------
+
+EXPLICACIÓN:
+La IP pública asignada automáticamente cambia si reinicias la instancia.
+Una IP Elástica es permanente y no cambia.
+
+1. En EC2 Dashboard, panel izquierdo: Network & Security > Elastic IPs
+
+2. Click "Allocate Elastic IP address"
+
+3. Configurar:
+   Network Border Group:
+   ┌─────────────────────────────────┐
+   │ us-east-1 (o tu región)         │
+   └─────────────────────────────────┘
+
+   Public IPv4 address pool:
+   ○ Amazon's pool of IPv4 addresses ✓
+
+4. Tags (opcional):
+   Key: Name, Value: hackaton-eip
+
+5. Click "Allocate"
+
+6. Ver mensaje de éxito:
+   ✅ Successfully allocated Elastic IP address
+   
+   New address: 98.87.67.95 (ejemplo)
+
+⚠️ IMPORTANTE: 
+- IP Elástica es GRATIS si está asociada a instancia en ejecución
+- Cobra $0.005/hora (~$3.60/mes) si está SIN USAR
+- SIEMPRE asociarla a una instancia o liberarla
+
+
+PASO 12: ASOCIAR IP ELÁSTICA A INSTANCIA
+-----------------------------------------
+
+1. Seleccionar la IP Elástica recién creada (98.87.67.95)
+
+2. Actions > Associate Elastic IP address
+
+3. Configurar:
+   Resource type:
+   ○ Instance ✓
+   ○ Network interface
+
+   Instance:
+   ┌─────────────────────────────────┐
+   │ i-xxx hackaton-flask-app        │
+   └─────────────────────────────────┘
+
+   Private IP address:
+   ┌─────────────────────────────────┐
+   │ 172.31.x.x (se llena automático)│
+   └─────────────────────────────────┘
+
+   ☑ Allow this Elastic IP address to be reassociated
+
+4. Click "Associate"
+
+5. Ver mensaje de éxito:
+   ✅ Successfully associated Elastic IP address
+
+6. Volver a EC2 > Instances
+
+7. Verificar que "Public IPv4 address" ahora es: 98.87.67.95
+
+GUARDAR ESTA IP:
+┌─────────────────────────────────┐
+│ IP Elástica: 98.87.67.95        │
+└─────────────────────────────────┘
+
+Esta es tu IP PERMANENTE para acceder a la aplicación.
+
+
+============================================
+PARTE 3: CONECTAR A LA INSTANCIA
+============================================
+
+PASO 13: PREPARAR CLAVE SSH EN WINDOWS
+---------------------------------------
+
+Si usas Windows PowerShell:
+
+1. Abrir PowerShell
+
+2. Navegar a la carpeta donde está la clave:
+```powershell
+cd C:\Users\anacr\Downloads
+```
+
+3. Verificar que el archivo existe:
+```powershell
+Get-Item ani.pem
+```
+
+4. Windows maneja permisos automáticamente, no necesitas chmod
+
+
+PASO 14: CONECTAR VÍA SSH
+--------------------------
+
+Desde PowerShell:
+
+```powershell
+ssh -i "C:\Users\anacr\Downloads\ani.pem" ubuntu@98.87.67.95
+```
+
+EXPLICACIÓN:
+- ssh: Comando para conexión segura
+- -i: Especifica archivo de clave privada
+- ubuntu: Usuario por defecto en Ubuntu AMI
+- 98.87.67.95: Tu IP Elástica
+
+Primera vez que te conectas:
+
+Verás mensaje:
+```
+The authenticity of host '98.87.67.95 (98.87.67.95)' can't be established.
+ECDSA key fingerprint is SHA256:abc123...
+Are you sure you want to continue connecting (yes/no/[fingerprint])?
+```
+
+Escribir: yes
+
+Ver mensaje de bienvenida:
+```
+Welcome to Ubuntu 22.04.3 LTS (GNU/Linux 6.2.0-1009-aws x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/advantage
+
+ubuntu@ip-172-31-x-x:~$
+```
+
+✅ ¡Conectado exitosamente!
+
+
+SOLUCIÓN DE PROBLEMAS DE CONEXIÓN:
+
+ERROR: "Permission denied (publickey)"
+SOLUCIÓN:
+- Verificar que usas usuario "ubuntu" (no "root" o "admin")
+- Verificar ruta correcta del archivo .pem
+- Verificar que descargaste la clave correcta
+
+ERROR: "Connection timed out"
+SOLUCIÓN:
+- Verificar Security Group permite puerto 22 desde tu IP
+- Verificar que usas la IP Elástica correcta
+- Verificar que la instancia está en estado "Running"
+
+ERROR: "Host key verification failed"
+SOLUCIÓN:
+- Eliminar entrada antigua: ssh-keygen -R 98.87.67.95
+- Intentar conectar nuevamente
+
+
+============================================
+PARTE 4: INSTALAR TODAS LAS DEPENDENCIAS
+============================================
+
+⚠️ IMPORTANTE: Esta instancia está COMPLETAMENTE VACÍA
+Instalaremos ABSOLUTAMENTE TODO desde cero.
+
+TIEMPO ESTIMADO: 15-20 minutos
+
+
+PASO 15: ACTUALIZAR SISTEMA COMPLETAMENTE
+------------------------------------------
+
+```bash
+# Actualizar lista de paquetes
+sudo apt update
+
+# Actualizar todos los paquetes instalados
+sudo apt upgrade -y
+
+# Limpiar paquetes no necesarios
+sudo apt autoremove -y
+sudo apt autoclean -y
+```
+
+EXPLICACIÓN:
+- apt update: Actualiza lista de paquetes disponibles
+- apt upgrade -y: Instala actualizaciones (-y acepta automáticamente)
+- autoremove: Elimina paquetes que ya no se necesitan
+- autoclean: Limpia archivos de instalación antiguos
+
+
+PASO 16: INSTALAR HERRAMIENTAS BÁSICAS DEL SISTEMA
+---------------------------------------------------
+
+```bash
+# Instalar herramientas esenciales de red y diagnóstico
+sudo apt install -y \
+    curl \
+    wget \
+    net-tools \
+    netcat \
+    iputils-ping \
+    traceroute \
+    dnsutils \
+    telnet \
+    openssh-server \
+    ufw \
+    htop \
+    vim \
+    nano \
+    tree \
+    zip \
+    unzip \
+    tar \
+    gzip \
+    bzip2 \
+    software-properties-common \
+    apt-transport-https \
+    ca-certificates \
+    gnupg \
+    lsb-release
+```
+
+EXPLICACIÓN DE CADA HERRAMIENTA:
+
+Herramientas de Red:
+- curl, wget: Descargar archivos desde URLs
+- net-tools: ifconfig, netstat, route
+- netcat: Pruebas de conexión de red
+- iputils-ping: Comando ping
+- traceroute: Rastrear ruta de paquetes
+- dnsutils: nslookup, dig (DNS tools)
+- telnet: Probar conexiones TCP
+
+Sistema:
+- openssh-server: Servidor SSH (ya instalado, pero actualizamos)
+- ufw: Firewall de Ubuntu
+- htop: Monitor de procesos interactivo
+- vim, nano: Editores de texto
+
+Compresión y Archivos:
+- tree: Ver estructura de directorios
+- zip, unzip: Archivos ZIP
+- tar, gzip, bzip2: Archivos comprimidos
+
+Utilidades:
+- software-properties-common: Gestión de repositorios
+- apt-transport-https: Soporte para repos HTTPS
+- ca-certificates: Certificados SSL/TLS
+- gnupg: Verificación de firmas
+- lsb-release: Información del sistema
+
+
+PASO 17: INSTALAR PYTHON Y TODAS SUS HERRAMIENTAS
+--------------------------------------------------
+
+```bash
+# Python 3 completo con todas las librerías de desarrollo
+sudo apt install -y \
+    python3 \
+    python3-pip \
+    python3-dev \
+    python3-venv \
+    python3-setuptools \
+    python3-wheel \
+    python3-distutils \
+    python-is-python3
+```
+
+EXPLICACIÓN:
+- python3: Intérprete de Python 3.10+
+- python3-pip: Instalador de paquetes Python
+- python3-dev: Archivos de desarrollo (headers)
+- python3-venv: Crear entornos virtuales
+- python3-setuptools: Herramientas de construcción
+- python3-wheel: Formato de distribución de paquetes
+- python3-distutils: Utilidades de distribución
+- python-is-python3: Alias 'python' apunta a python3
+
+```bash
+# Actualizar pip, setuptools y wheel a las últimas versiones
+python3 -m pip install --upgrade pip setuptools wheel
+```
+
+
+PASO 18: INSTALAR HERRAMIENTAS DE COMPILACIÓN
+----------------------------------------------
+
+```bash
+# Compiladores y herramientas de construcción
+# NECESARIOS para compilar mysqlclient
+sudo apt install -y \
+    build-essential \
+    gcc \
+    g++ \
+    make \
+    cmake \
+    autoconf \
+    automake \
+    libtool \
+    pkg-config
+```
+
+EXPLICACIÓN:
+- build-essential: Meta-paquete con compiladores esenciales
+- gcc: Compilador de C
+- g++: Compilador de C++
+- make: Herramienta de construcción
+- cmake: Sistema de construcción multiplataforma
+- autoconf, automake: Generación de makefiles
+- libtool: Creación de bibliotecas compartidas
+- pkg-config: Gestión de flags de compilación
+
+⚠️ SIN ESTAS HERRAMIENTAS, mysqlclient NO SE PODRÁ INSTALAR
+
+
+PASO 19: INSTALAR LIBRERÍAS DE DESARROLLO DE MYSQL
+---------------------------------------------------
+
+```bash
+# Librerías necesarias para conectar Python con MySQL/RDS
+sudo apt install -y \
+    default-libmysqlclient-dev \
+    libmysqlclient-dev \
+    mysql-client \
+    mysql-common \
+    libssl-dev \
+    libffi-dev
+```
+
+EXPLICACIÓN:
+- default-libmysqlclient-dev: Librerías de desarrollo MySQL
+- libmysqlclient-dev: Headers de MySQL (para compilar mysqlclient)
+- mysql-client: Cliente de línea de comandos MySQL
+- mysql-common: Archivos comunes de MySQL
+- libssl-dev: Soporte SSL/TLS (para conexiones seguras a RDS)
+- libffi-dev: Foreign Function Interface (para cryptography)
+
+⚠️ CRÍTICO para mysqlclient: libmysqlclient-dev y pkg-config
+
+
+PASO 20: INSTALAR LIBRERÍAS DE DESARROLLO ADICIONALES
+------------------------------------------------------
+
+```bash
+# Librerías que pueden ser necesarias para otras dependencias Python
+sudo apt install -y \
+    libxml2-dev \
+    libxslt1-dev \
+    zlib1g-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libfreetype6-dev \
+    libbz2-dev \
+    libreadline-dev \
+    libsqlite3-dev \
+    libncurses5-dev \
+    libncursesw5-dev \
+    liblzma-dev \
+    libgdbm-dev \
+    libnss3-dev
+```
+
+EXPLICACIÓN:
+- libxml2-dev, libxslt1-dev: Procesamiento XML
+- zlib1g-dev: Compresión (usado por muchas librerías)
+- libjpeg-dev, libpng-dev, libfreetype6-dev: Procesamiento de imágenes
+- libbz2-dev, liblzma-dev: Algoritmos de compresión
+- libreadline-dev: Edición de línea de comandos
+- libsqlite3-dev: SQLite (por si necesitas DB local)
+- libncurses5-dev: Interfaces de texto
+- libgdbm-dev: Base de datos simple
+- libnss3-dev: Network Security Services
+
+
+PASO 21: INSTALAR GIT Y HERRAMIENTAS DE CONTROL DE VERSIONES
+-------------------------------------------------------------
+
+```bash
+# Git completo
+sudo apt install -y \
+    git \
+    git-core \
+    git-lfs
+```
+
+EXPLICACIÓN:
+- git: Control de versiones
+- git-core: Componentes principales de Git
+- git-lfs: Large File Storage (para archivos grandes)
+
+```bash
+# Configurar Git con tus datos
+git config --global user.name "Ana Felix"
+git config --global user.email "anafelix21@example.com"
+git config --global init.defaultBranch main
+```
+
+PERSONALIZAR:
+- Cambiar "Ana Felix" por tu nombre
+- Cambiar email por tu email de GitHub
+
+
+PASO 22: INSTALAR NODE.JS Y NPM
+--------------------------------
+
+```bash
+# Instalar Node.js LTS (necesario para compilar Tailwind CSS si es necesario)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs npm
+
+# Actualizar npm a la última versión
+sudo npm install -g npm@latest
+```
+
+EXPLICACIÓN:
+- Node.js 20.x: Versión LTS (Long Term Support)
+- npm: Node Package Manager
+- Se necesita para Tailwind CSS y herramientas frontend
+
+
+PASO 23: INSTALAR NGINX (OPCIONAL)
+-----------------------------------
+
+```bash
+# Nginx (por si lo necesitas como reverse proxy en el futuro)
+sudo apt install -y nginx
+
+# Deshabilitarlo por ahora (lo activaremos si lo necesitamos)
+sudo systemctl stop nginx
+sudo systemctl disable nginx
+```
+
+EXPLICACIÓN:
+- Nginx: Servidor web de alto rendimiento
+- Útil como reverse proxy frente a Gunicorn
+- Lo dejamos deshabilitado por ahora (usaremos solo Gunicorn)
+
+
+PASO 24: INSTALAR HERRAMIENTAS DE MONITOREO Y LOGS
+---------------------------------------------------
+
+```bash
+# Herramientas de monitoreo del sistema
+sudo apt install -y \
+    sysstat \
+    iotop \
+    nmon \
+    lsof \
+    strace
+```
+
+EXPLICACIÓN:
+- sysstat: Estadísticas del sistema (sar, iostat)
+- iotop: Monitor de I/O por proceso (como top pero para disco)
+- nmon: Monitor del sistema (CPU, memoria, red, disco)
+- lsof: Lista archivos abiertos (útil para debug)
+- strace: Rastrear llamadas al sistema
+
+
+PASO 25: CONFIGURAR ZONA HORARIA
+---------------------------------
+
+```bash
+# Configurar zona horaria
+sudo timedatectl set-timezone America/New_York
+```
+
+OPCIONES DE ZONA HORARIA:
+- America/New_York (Eastern Time)
+- America/Chicago (Central Time)
+- America/Denver (Mountain Time)
+- America/Los_Angeles (Pacific Time)
+- America/Mexico_City (México)
+- America/Bogota (Colombia)
+- America/Lima (Perú)
+- America/Argentina/Buenos_Aires (Argentina)
+
+Ver zonas disponibles:
+```bash
+timedatectl list-timezones | grep America
+```
+
+Verificar zona configurada:
+```bash
+timedatectl
+```
+
+
+PASO 26: VERIFICAR TODAS LAS INSTALACIONES
+-------------------------------------------
+
+```bash
+echo "=== VERIFICANDO INSTALACIONES ==="
+
+# Verificar Python
+echo "Python version:"
+python3 --version
+echo "Pip version:"
+pip3 --version
+
+# Verificar Git
+echo "Git version:"
+git --version
+
+# Verificar Node.js y npm
+echo "Node.js version:"
+node --version
+echo "npm version:"
+npm --version
+
+# Verificar MySQL client
+echo "MySQL client version:"
+mysql --version
+
+# Verificar herramientas de compilación
+echo "GCC version:"
+gcc --version
+echo "Make version:"
+make --version
+
+# Verificar espacio en disco
+echo "Disk space:"
+df -h
+
+# Verificar memoria
+echo "Memory:"
+free -h
+
+echo "=== ✅ TODAS LAS DEPENDENCIAS INSTALADAS CORRECTAMENTE ==="
+```
+
+SALIDA ESPERADA:
+```
+Python version: Python 3.10.12
+Pip version: pip 24.0
+Git version: git version 2.34.1
+Node.js version: v20.x.x
+npm version: 10.x.x
+MySQL client version: mysql  Ver 8.0.x
+GCC version: gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0
+Make version: GNU Make 4.3
+```
+
+✅ Si todas las versiones aparecen correctamente, continuamos al siguiente paso!
+
+
+============================================
+PARTE 5: CLONAR Y CONFIGURAR PROYECTO
+============================================
+
+PASO 27: CLONAR REPOSITORIO DESDE GITHUB
+-----------------------------------------
+
+```bash
+# Asegurarse de estar en el directorio home
+cd /home/ubuntu
+
+# Clonar repositorio
+git clone https://github.com/anafelix21/ht252S2_wp_AnaFelix.git
+
+# Entrar al directorio del proyecto
+cd ht252S2_wp_AnaFelix
+
+# Cambiar a rama develop
+git checkout develop
+
+# Verificar archivos clonados
+ls -la
+```
+
+SALIDA ESPERADA:
+```
+app.py
+database.sql
+MANUAL_EC2.txt
+MANUAL_RDS.txt
+README.md
+requirements.txt
+package.json
+static/
+templates/
+.env.example
+.gitignore
+```
+
+Verificar rama actual:
+```bash
+git branch
+```
+
+Debe mostrar:
+```
+* develop
+```
+
+
+PASO 28: CONFIGURAR APLICACIÓN FLASK
+-------------------------------------
+
+```bash
+# Editar app.py con la configuración de RDS
+nano app.py
+```
+
+Buscar las líneas (aproximadamente línea 28-34):
+
+```python
+# ANTES (localhost):
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] = 'tu_password_mysql'
+app.config['MYSQL_DB'] = 'hackaton'
+```
+
+Cambiar a (RDS endpoint):
+
+```python
+# DESPUÉS (RDS):
+app.config['MYSQL_HOST'] = 'hackaton-mysql-db.c9akciq32.us-east-1.rds.amazonaws.com'
+app.config['MYSQL_USER'] = 'admin'
+app.config['MYSQL_PASSWORD'] = 'TuPasswordSeguro123!'
+app.config['MYSQL_DB'] = 'hackaton'
+```
+
+⚠️ IMPORTANTE:
+- Reemplazar el endpoint con TU endpoint real de RDS
+- Reemplazar la contraseña con TU contraseña real de RDS
+- NO dejar "tu_password_mysql"
+
+Guardar cambios:
+- Ctrl + O (Write Out)
+- Enter (confirmar nombre de archivo)
+- Ctrl + X (Exit)
+
+Verificar cambios:
+```bash
+grep "MYSQL_HOST" app.py
+```
+
+Debe mostrar tu endpoint de RDS.
+
+
+ALTERNATIVA - Usar archivo .env (Más Seguro):
+----------------------------------------------
+
+```bash
+# Copiar ejemplo de .env
+cp .env.example .env
+
+# Editar .env
+nano .env
+```
+
+Configurar:
+```bash
+MYSQL_HOST=hackaton-mysql-db.c9akciq32.us-east-1.rds.amazonaws.com
+MYSQL_USER=admin
+MYSQL_PASSWORD=TuPasswordSeguro123!
+MYSQL_DB=hackaton
+PORT=5000
+```
+
+Guardar y cerrar (Ctrl+O, Enter, Ctrl+X)
+
+Modificar app.py para leer desde .env:
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+app.config['MYSQL_HOST'] = os.getenv('MYSQL_HOST')
+app.config['MYSQL_USER'] = os.getenv('MYSQL_USER')
+app.config['MYSQL_PASSWORD'] = os.getenv('MYSQL_PASSWORD')
+app.config['MYSQL_DB'] = os.getenv('MYSQL_DB')
+```
+
+VENTAJA:
+- Credenciales NO están en el código
+- Más seguro para producción
+- No se suben a GitHub (está en .gitignore)
+
+
+PASO 29: CREAR ENTORNO VIRTUAL DE PYTHON
+-----------------------------------------
+
+```bash
+# Asegurarse de estar en el directorio del proyecto
+cd /home/ubuntu/ht252S2_wp_AnaFelix
+
+# Crear entorno virtual
+python3 -m venv venv
+
+# Activar entorno virtual
+source venv/bin/activate
+```
+
+Verás que el prompt cambia:
+```
+(venv) ubuntu@ip-172-31-x-x:~/ht252S2_wp_AnaFelix$
+```
+
+El prefijo `(venv)` indica que estás en el entorno virtual.
+
+Verificar que estamos en el entorno virtual correcto:
+```bash
+which python3
+```
+
+Debe mostrar:
+```
+/home/ubuntu/ht252S2_wp_AnaFelix/venv/bin/python3
+```
+
+✅ Si muestra la ruta del venv, estás en el entorno correcto!
+
+
+PASO 30: INSTALAR TODAS LAS DEPENDENCIAS PYTHON
+------------------------------------------------
+
+```bash
+# Actualizar herramientas base del entorno virtual
+pip install --upgrade pip setuptools wheel
+
+# Instalar todas las dependencias del proyecto
+pip install -r requirements.txt
+```
+
+SALIDA ESPERADA:
+```
+Collecting flask==3.0.0
+Collecting flask-mysqldb==2.0.0
+Collecting mysqlclient==2.2.0
+  Downloading mysqlclient-2.2.0.tar.gz
+  Building wheels for mysqlclient...
+  Successfully built mysqlclient
+Collecting python-dotenv==1.0.0
+Collecting gunicorn==21.2.0
+...
+Successfully installed Flask-3.0.0 Flask-MySQLdb-2.0.0 ...
+```
+
+⚠️ SI MYSQLCLIENT DA ERROR:
+```bash
+# Verificar que las librerías de desarrollo están instaladas
+dpkg -l | grep libmysqlclient-dev
+
+# Debería mostrar: libmysqlclient-dev
+
+# Si no está instalado:
+sudo apt install -y default-libmysqlclient-dev build-essential pkg-config
+
+# Intentar instalar nuevamente
+pip install mysqlclient==2.2.0
+```
+
+
+PASO 31: VERIFICAR INSTALACIONES PYTHON
+----------------------------------------
+
+```bash
+echo "=== VERIFICANDO DEPENDENCIAS PYTHON ==="
+
+# Ver todas las librerías instaladas
+pip list
+
+# Verificar versiones específicas
+pip show Flask
+pip show Flask-MySQLdb
+pip show mysqlclient
+pip show gunicorn
+
+# Verificar que mysqlclient se compiló correctamente
+python3 -c "import MySQLdb; print('✅ MySQLdb instalado correctamente')"
+
+# Verificar Flask
+python3 -c "import flask; print(f'✅ Flask {flask.__version__} instalado correctamente')"
+
+# Verificar Gunicorn
+gunicorn --version
+
+echo "=== ✅ TODAS LAS DEPENDENCIAS PYTHON INSTALADAS ==="
+```
+
+SALIDA ESPERADA:
+```
+✅ MySQLdb instalado correctamente
+✅ Flask 3.0.0 instalado correctamente
+gunicorn (version 21.2.0)
+```
+
+
+PASO 32: PROBAR CONEXIÓN A RDS
+-------------------------------
+
+```bash
+# Crear script de prueba
+nano test_rds_connection.py
+```
+
+Copiar este código:
+```python
+#!/usr/bin/env python3
+from flask import Flask
+from flask_mysqldb import MySQL
+import MySQLdb.cursors
+
+app = Flask(__name__)
+
+# Configuración de RDS (usa tus credenciales reales)
+app.config['MYSQL_HOST'] = 'hackaton-mysql-db.c9akciq32.us-east-1.rds.amazonaws.com'
+app.config['MYSQL_USER'] = 'admin'
+app.config['MYSQL_PASSWORD'] = 'TuPasswordSeguro123!'
+app.config['MYSQL_DB'] = 'hackaton'
+
+mysql = MySQL(app)
+
+with app.app_context():
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute('SELECT VERSION()')
+        version = cursor.fetchone()
+        print(f'✅ Conexión exitosa a RDS MySQL')
+        print(f'📊 MySQL version: {version[0]}')
+        
+        cursor.execute('SELECT COUNT(*) FROM equipos')
+        count = cursor.fetchone()
+        print(f'📦 Total de equipos en base de datos: {count[0]}')
+        
+        cursor.close()
+    except Exception as e:
+        print(f'❌ Error de conexión: {e}')
+```
+
+Guardar (Ctrl+O, Enter, Ctrl+X)
+
+Ejecutar prueba:
+```bash
+python3 test_rds_connection.py
+```
+
+SALIDA ESPERADA:
+```
+✅ Conexión exitosa a RDS MySQL
+📊 MySQL version: 8.0.35
+📦 Total de equipos en base de datos: 5
+```
+
+✅ Si ves este mensaje, la conexión a RDS funciona!
+
+❌ Si hay error, verificar:
+1. Endpoint de RDS correcto en app.py
+2. Credenciales correctas
+3. Security Group de RDS permite conexión desde EC2
+4. Base de datos 'hackaton' existe en RDS
+5. Tabla 'equipos' existe en la base de datos
+
+
+CONTINÚA EN LA SIGUIENTE PARTE...

@@ -1,0 +1,1344 @@
+============================================
+MANUAL DE CONFIGURACIÓN AWS RDS MYSQL
+GUÍA COMPLETA PARA BASE DE DATOS
+============================================
+
+DESCRIPCIÓN:
+Este manual cubre EXCLUSIVAMENTE la configuración de AWS RDS MySQL
+para el proyecto de gestión de equipos.
+
+ALCANCE:
+✅ Creación de instancia RDS MySQL
+✅ Configuración de Security Groups
+✅ Configuración de acceso público/privado
+✅ Creación de base de datos y tablas
+✅ Configuración de backups automáticos
+✅ Monitoreo y alertas
+✅ Optimización de rendimiento
+✅ Costos y estimaciones
+
+REQUISITOS PREVIOS:
+- Cuenta AWS activa
+- Acceso a AWS Console
+- Conocimientos básicos de MySQL
+- Conocimientos básicos de redes (Security Groups, VPC)
+
+
+============================================
+PARTE 1: CREAR INSTANCIA RDS MYSQL
+============================================
+
+PASO 1: ACCEDER A RDS EN AWS CONSOLE
+-------------------------------------
+
+1. Iniciar sesión en AWS Console: https://console.aws.amazon.com/
+2. En el buscador superior, escribir "RDS"
+3. Click en "RDS" (Relational Database Service)
+4. En el panel izquierdo, click en "Databases"
+5. Click en el botón naranja "Create database"
+
+
+PASO 2: CONFIGURAR MÉTODO DE CREACIÓN
+--------------------------------------
+
+CHOOSE A DATABASE CREATION METHOD:
+
+○ Standard create ✓ (SELECCIONAR ESTA)
+○ Easy create
+
+EXPLICACIÓN:
+- Standard create: Control completo sobre todas las configuraciones
+- Easy create: Configuración rápida con valores predeterminados
+
+Seleccionar: Standard create
+
+
+PASO 3: CONFIGURAR OPCIONES DEL MOTOR
+--------------------------------------
+
+ENGINE OPTIONS:
+
+Engine type:
+- Amazon Aurora (no seleccionar)
+- MySQL ✓ (SELECCIONAR ESTE)
+- MariaDB
+- PostgreSQL
+- Oracle
+- Microsoft SQL Server
+
+Engine Version:
+- MySQL 8.0.35 (o la versión más reciente disponible)
+- Se recomienda usar la última versión estable de MySQL 8.0.x
+
+EXPLICACIÓN:
+- MySQL 8.0 es estable, probado y compatible con Flask-MySQLdb
+- Tiene mejor rendimiento que versiones anteriores
+- Soporte a largo plazo
+
+
+PASO 4: SELECCIONAR PLANTILLA
+------------------------------
+
+TEMPLATES:
+
+○ Production (alta disponibilidad, backups, etc.)
+○ Dev/Test (configuración balanceada)
+○ Free tier ✓ (SELECCIONAR PARA DESARROLLO/APRENDIZAJE)
+
+EXPLICACIÓN:
+Free tier incluye:
+- 750 horas/mes de db.t3.micro (gratis primer año)
+- 20 GB de almacenamiento SSD (gp3)
+- 20 GB de backups automáticos
+
+Para producción real, seleccionar "Production"
+
+
+PASO 5: CONFIGURACIÓN DE CREDENCIALES
+--------------------------------------
+
+SETTINGS:
+
+DB instance identifier:
+┌─────────────────────────────────┐
+│ hackaton-mysql-db               │
+└─────────────────────────────────┘
+
+EXPLICACIÓN:
+- Nombre único para identificar tu instancia RDS
+- Solo letras minúsculas, números y guiones
+- Debe ser único en tu región de AWS
+
+Credential Settings:
+
+Master username:
+┌─────────────────────────────────┐
+│ admin                           │
+└─────────────────────────────────┘
+
+EXPLICACIÓN:
+- Usuario maestro de la base de datos
+- Tendrá todos los privilegios
+- NO usar "root" (reservado)
+
+Credentials management:
+○ Self managed ✓ (SELECCIONAR)
+○ Manage master credentials in AWS Secrets Manager
+
+Master password:
+┌─────────────────────────────────┐
+│ TuPasswordSeguro123!            │
+└─────────────────────────────────┘
+
+Confirm password:
+┌─────────────────────────────────┐
+│ TuPasswordSeguro123!            │
+└─────────────────────────────────┘
+
+REQUISITOS DE CONTRASEÑA:
+- Mínimo 8 caracteres
+- Al menos una letra mayúscula
+- Al menos una letra minúscula
+- Al menos un número
+- Al menos un carácter especial (!@#$%^&*)
+- NO usar caracteres especiales problemáticos: / @ " '
+
+RECOMENDACIONES:
+✅ Usar contraseña fuerte y única
+✅ Guardar contraseña en lugar seguro (1Password, LastPass, etc.)
+✅ NO compartir contraseña en repositorios públicos
+✅ Considerar AWS Secrets Manager para producción
+
+
+PASO 6: CONFIGURAR CLASE DE INSTANCIA
+--------------------------------------
+
+INSTANCE CONFIGURATION:
+
+DB instance class:
+
+Clases disponibles:
+1. Burstable classes (t3, t4g) - Para cargas variables
+2. Standard classes (m5, m6) - Para uso general
+3. Memory optimized (r5, r6) - Para aplicaciones con mucha memoria
+
+Para Free Tier, seleccionar:
+┌─────────────────────────────────┐
+│ db.t3.micro                     │
+│ 1 vCPU, 1 GB RAM                │
+└─────────────────────────────────┘
+
+COMPARACIÓN DE INSTANCIAS:
+
+┌─────────────┬──────┬────────┬──────────┬────────────┐
+│ Clase       │ vCPU │ RAM    │ Costo/mes│ Uso        │
+├─────────────┼──────┼────────┼──────────┼────────────┤
+│ db.t3.micro │  1   │ 1 GB   │ Gratis*  │ Desarrollo │
+│ db.t3.small │  2   │ 2 GB   │ ~$30     │ Dev/Test   │
+│ db.t3.medium│  2   │ 4 GB   │ ~$60     │ Producción │
+│ db.m5.large │  2   │ 8 GB   │ ~$140    │ Producción │
+└─────────────┴──────┴────────┴──────────┴────────────┘
+
+* Gratis primer año con AWS Free Tier
+
+
+PASO 7: CONFIGURAR ALMACENAMIENTO
+----------------------------------
+
+STORAGE:
+
+Storage type:
+┌─────────────────────────────────┐
+│ General Purpose SSD (gp3) ✓     │
+└─────────────────────────────────┘
+
+TIPOS DE ALMACENAMIENTO:
+- gp3 (General Purpose SSD): Mejor relación precio/rendimiento
+- gp2 (General Purpose SSD): Versión anterior
+- io1 (Provisioned IOPS): Para alto rendimiento (costoso)
+- Magnetic: Deprecated, no usar
+
+Allocated storage:
+┌─────────────────────────────────┐
+│ 20 GB (mínimo para free tier)  │
+└─────────────────────────────────┘
+
+IOPS (solo para gp3):
+┌─────────────────────────────────┐
+│ 3000 (default, suficiente)      │
+└─────────────────────────────────┘
+
+Throughput (solo para gp3):
+┌─────────────────────────────────┐
+│ 125 MB/s (default)              │
+└─────────────────────────────────┘
+
+Storage autoscaling:
+☑ Enable storage autoscaling
+
+Maximum storage threshold:
+┌─────────────────────────────────┐
+│ 100 GB                          │
+└─────────────────────────────────┘
+
+EXPLICACIÓN:
+- RDS aumentará automáticamente el almacenamiento si se llena
+- Evita quedarse sin espacio sin intervención manual
+
+
+PASO 8: CONFIGURAR CONECTIVIDAD
+--------------------------------
+
+CONNECTIVITY:
+
+Compute resource:
+○ Don't connect to an EC2 compute resource ✓
+○ Connect to an EC2 compute resource
+
+EXPLICACIÓN:
+- Seleccionar la primera opción
+- Configuraremos la conexión manualmente con Security Groups
+
+Virtual private cloud (VPC):
+┌─────────────────────────────────┐
+│ Default VPC                     │
+└─────────────────────────────────┘
+
+EXPLICACIÓN:
+- Usar VPC por defecto es suficiente para desarrollo
+- Para producción, considerar crear VPC personalizada
+
+DB subnet group:
+┌─────────────────────────────────┐
+│ default                         │
+└─────────────────────────────────┘
+
+Public access:
+○ Yes ✓ (PARA DESARROLLO/MYSQL WORKBENCH)
+○ No (PARA PRODUCCIÓN)
+
+IMPORTANTE:
+- Yes: Permite conexión desde fuera de AWS (MySQL Workbench, EC2)
+- No: Solo accesible desde dentro de la VPC (más seguro)
+- Para este tutorial usaremos "Yes"
+
+VPC security group:
+○ Create new ✓
+○ Choose existing
+
+New VPC security group name:
+┌─────────────────────────────────┐
+│ rds-hackaton-sg                 │
+└─────────────────────────────────┘
+
+Availability Zone:
+┌─────────────────────────────────┐
+│ No preference                   │
+└─────────────────────────────────┘
+
+RDS Proxy:
+☐ Create an RDS Proxy (no seleccionar)
+
+
+PASO 9: CONFIGURAR AUTENTICACIÓN
+---------------------------------
+
+DATABASE AUTHENTICATION:
+
+Database authentication options:
+☑ Password authentication ✓
+☐ Password and IAM database authentication
+☐ Password and Kerberos authentication
+
+EXPLICACIÓN:
+- Password authentication es suficiente para la mayoría de casos
+- IAM authentication es más seguro pero requiere configuración adicional
+
+
+PASO 10: CONFIGURACIÓN ADICIONAL
+---------------------------------
+
+ADDITIONAL CONFIGURATION (expandir sección):
+
+Database options:
+
+Initial database name:
+┌─────────────────────────────────┐
+│ hackaton                        │
+└─────────────────────────────────┘
+
+IMPORTANTE:
+- Crear la base de datos automáticamente
+- Si se deja vacío, tendrás que crearla manualmente después
+
+DB parameter group:
+┌─────────────────────────────────┐
+│ default.mysql8.0                │
+└─────────────────────────────────┘
+
+Option group:
+┌─────────────────────────────────┐
+│ default:mysql-8-0               │
+└─────────────────────────────────┘
+
+Backup:
+
+☑ Enable automated backups ✓
+
+Backup retention period:
+┌─────────────────────────────────┐
+│ 7 days                          │
+└─────────────────────────────────┘
+
+EXPLICACIÓN:
+- RDS hará backups automáticos diariamente
+- Podrás restaurar a cualquier momento dentro de 7 días
+
+Backup window:
+┌─────────────────────────────────┐
+│ No preference                   │
+└─────────────────────────────────┘
+(RDS elegirá la mejor hora automáticamente)
+
+☐ Copy tags to snapshots (opcional)
+
+Encryption:
+
+☑ Enable encryption ✓ (RECOMENDADO)
+
+AWS KMS key:
+┌─────────────────────────────────┐
+│ (default) aws/rds               │
+└─────────────────────────────────┘
+
+EXPLICACIÓN:
+- Cifra los datos en reposo
+- Obligatorio para datos sensibles
+- Sin costo adicional
+
+Performance Insights:
+
+☐ Enable Performance Insights (opcional, tiene costo)
+
+Monitoring:
+
+☑ Enable Enhanced monitoring (RECOMENDADO)
+
+Granularity:
+┌─────────────────────────────────┐
+│ 60 seconds                      │
+└─────────────────────────────────┘
+
+Monitoring Role:
+┌─────────────────────────────────┐
+│ Default (RDS creates role)      │
+└─────────────────────────────────┘
+
+Log exports (opcional):
+☐ Error log
+☐ General log
+☐ Slow query log
+☐ Audit log
+
+Maintenance:
+
+☑ Enable auto minor version upgrade ✓
+
+Maintenance window:
+┌─────────────────────────────────┐
+│ No preference                   │
+└─────────────────────────────────┘
+
+Deletion protection:
+
+☐ Enable deletion protection (desactivar para desarrollo)
+☑ Enable deletion protection (activar para producción)
+
+
+PASO 11: REVISAR Y CREAR
+-------------------------
+
+1. Revisar todas las configuraciones
+2. Verificar el resumen de costos en la parte derecha:
+
+   Estimated monthly costs:
+   ┌─────────────────────────────────┐
+   │ Instance: $0.00 (Free tier)     │
+   │ Storage: $0.00 (Free tier)      │
+   │ Backups: $0.00 (20 GB gratis)   │
+   │ Total: $0.00/month              │
+   └─────────────────────────────────┘
+
+3. Click en "Create database" (botón naranja)
+
+4. Esperar 5-10 minutos mientras RDS crea la instancia
+
+5. Ver progreso:
+   - Status: Creating... → Backing-up → Available
+
+
+PASO 12: OBTENER INFORMACIÓN DE CONEXIÓN
+-----------------------------------------
+
+Una vez que el estado es "Available":
+
+1. Click en el nombre de la base de datos: "hackaton-mysql-db"
+
+2. En la pestaña "Connectivity & security", encontrarás:
+
+   Endpoint:
+   ┌──────────────────────────────────────────────────┐
+   │ hackaton-mysql-db.c9akciq32.us-east-1.rds.ama... │
+   └──────────────────────────────────────────────────┘
+
+   Port:
+   ┌─────────────────────────────────┐
+   │ 3306                            │
+   └─────────────────────────────────┘
+
+3. GUARDAR ESTA INFORMACIÓN:
+   - Endpoint completo (lo necesitarás en app.py)
+   - Puerto (siempre es 3306 para MySQL)
+   - Usuario: admin
+   - Contraseña: TuPasswordSeguro123!
+   - Base de datos: hackaton
+
+
+============================================
+PARTE 2: CONFIGURAR SECURITY GROUP
+============================================
+
+PASO 13: MODIFICAR REGLAS DE SEGURIDAD
+---------------------------------------
+
+IMPORTANTE: Por defecto, RDS no permite conexiones externas.
+Debemos configurar el Security Group.
+
+1. En la página de detalles de RDS, sección "Connectivity & security"
+
+2. Encontrar "VPC security groups", click en el nombre: "rds-hackaton-sg"
+
+3. En la pestaña "Inbound rules", click "Edit inbound rules"
+
+4. CONFIGURAR REGLAS:
+
+   Opción A - Para Desarrollo (acceso desde cualquier IP):
+   ┌──────────────┬──────────┬───────────┬──────────────┐
+   │ Type         │ Protocol │ Port Range│ Source       │
+   ├──────────────┼──────────┼───────────┼──────────────┤
+   │ MYSQL/Aurora │ TCP      │ 3306      │ 0.0.0.0/0    │
+   └──────────────┴──────────┴───────────┴──────────────┘
+
+   ⚠️ ADVERTENCIA: Esto permite acceso desde cualquier IP.
+   Solo usar para desarrollo/pruebas.
+
+   Opción B - Para Producción (acceso solo desde EC2):
+   ┌──────────────┬──────────┬───────────┬──────────────┐
+   │ Type         │ Protocol │ Port Range│ Source       │
+   ├──────────────┼──────────┼───────────┼──────────────┤
+   │ MYSQL/Aurora │ TCP      │ 3306      │ sg-xxxxx     │
+   └──────────────┴──────────┴───────────┴──────────────┘
+
+   Donde sg-xxxxx es el Security Group de tu instancia EC2
+
+   Opción C - Para MySQL Workbench (acceso desde tu PC):
+   ┌──────────────┬──────────┬───────────┬──────────────┐
+   │ Type         │ Protocol │ Port Range│ Source       │
+   ├──────────────┼──────────┼───────────┼──────────────┤
+   │ MYSQL/Aurora │ TCP      │ 3306      │ Mi-IP/32     │
+   └──────────────┴──────────┴───────────┴──────────────┘
+
+   Click en "My IP" para usar automáticamente tu IP actual
+
+5. Click "Save rules"
+
+
+CONFIGURACIÓN RECOMENDADA POR CASO DE USO:
+
+Caso 1 - Solo EC2 accede a RDS (MÁS SEGURO):
+- Source: Security Group de EC2
+- Ventaja: RDS no es accesible desde internet
+- Desventaja: No puedes usar MySQL Workbench directamente
+
+Caso 2 - EC2 + MySQL Workbench:
+- Regla 1: Source = Security Group de EC2
+- Regla 2: Source = Tu IP específica
+- Ventaja: Seguro y puedes usar Workbench
+- Desventaja: Si tu IP cambia, debes actualizarla
+
+Caso 3 - Desarrollo rápido (MENOS SEGURO):
+- Source: 0.0.0.0/0
+- Ventaja: Funciona desde cualquier lugar
+- Desventaja: Menos seguro, solo para desarrollo
+
+
+============================================
+PARTE 3: CREAR BASE DE DATOS Y TABLAS
+============================================
+
+PASO 14: CONECTAR A RDS CON MYSQL WORKBENCH
+--------------------------------------------
+
+OPCIÓN A - Desde MySQL Workbench (Recomendado):
+
+1. Abrir MySQL Workbench en tu PC
+
+2. Click en el botón "+" junto a "MySQL Connections"
+
+3. Configurar conexión:
+
+   Connection Name:
+   ┌─────────────────────────────────┐
+   │ AWS RDS Hackaton                │
+   └─────────────────────────────────┘
+
+   Connection Method:
+   ┌─────────────────────────────────┐
+   │ Standard (TCP/IP)               │
+   └─────────────────────────────────┘
+
+   Hostname:
+   ┌──────────────────────────────────────────────────┐
+   │ hackaton-mysql-db.c9akciq32.us-east-1.rds.ama... │
+   └──────────────────────────────────────────────────┘
+   (Copiar el endpoint completo de RDS)
+
+   Port:
+   ┌─────────────────────────────────┐
+   │ 3306                            │
+   └─────────────────────────────────┘
+
+   Username:
+   ┌─────────────────────────────────┐
+   │ admin                           │
+   └─────────────────────────────────┘
+
+   Password:
+   - Click en "Store in Vault..."
+   - Ingresar: TuPasswordSeguro123!
+
+4. Click "Test Connection"
+
+   Si sale error:
+   - Verificar Security Group permite tu IP
+   - Verificar endpoint correcto
+   - Verificar contraseña correcta
+
+   Si es exitoso:
+   ✅ "Successfully made the MySQL connection"
+
+5. Click "OK" para guardar la conexión
+
+6. Doble click en "AWS RDS Hackaton" para conectar
+
+
+PASO 15: CREAR TABLA DE EQUIPOS
+--------------------------------
+
+Una vez conectado en MySQL Workbench:
+
+1. Verificar que estamos en la base de datos correcta:
+   ```sql
+   USE hackaton;
+   ```
+
+2. Crear tabla de equipos:
+
+```sql
+-- Eliminar tabla si existe (solo para desarrollo)
+DROP TABLE IF EXISTS equipos;
+
+-- Crear tabla equipos
+CREATE TABLE equipos (
+    id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'ID único del equipo',
+    codigo VARCHAR(50) NOT NULL UNIQUE COMMENT 'Código único del equipo (ej: LAB-001)',
+    tipo VARCHAR(50) NOT NULL COMMENT 'Tipo de equipo (Laptop, Desktop, etc.)',
+    marcas VARCHAR(50) NOT NULL COMMENT 'Marca del equipo (Dell, HP, Lenovo, etc.)',
+    modelo VARCHAR(100) NOT NULL COMMENT 'Modelo específico del equipo',
+    so VARCHAR(50) NOT NULL COMMENT 'Sistema operativo (Windows 11, Ubuntu, etc.)',
+    almacenamiento INT NOT NULL COMMENT 'Capacidad de almacenamiento en GB',
+    ram INT NOT NULL COMMENT 'Memoria RAM en GB',
+    estado VARCHAR(50) NOT NULL COMMENT 'Estado actual (Disponible, En uso, Mantenimiento)',
+    mantenimiento DATE NOT NULL COMMENT 'Fecha del último mantenimiento',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Fecha de creación del registro',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Fecha de última actualización',
+    
+    -- Índices para mejorar rendimiento
+    INDEX idx_codigo (codigo),
+    INDEX idx_tipo (tipo),
+    INDEX idx_estado (estado),
+    INDEX idx_mantenimiento (mantenimiento)
+    
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tabla de equipos informáticos';
+```
+
+3. Verificar que la tabla se creó correctamente:
+
+```sql
+-- Ver todas las tablas
+SHOW TABLES;
+
+-- Ver estructura de la tabla
+DESCRIBE equipos;
+
+-- Ver definición completa
+SHOW CREATE TABLE equipos;
+```
+
+4. Insertar datos de prueba (opcional):
+
+```sql
+-- Insertar equipos de ejemplo
+INSERT INTO equipos (codigo, tipo, marcas, modelo, so, almacenamiento, ram, estado, mantenimiento) VALUES
+('LAB-001', 'Laptop', 'Dell', 'Latitude 5420', 'Windows 11', 512, 16, 'Disponible', '2025-01-15'),
+('LAB-002', 'Desktop', 'HP', 'EliteDesk 800 G6', 'Windows 10', 1000, 32, 'En uso', '2025-02-20'),
+('LAB-003', 'Laptop', 'Lenovo', 'ThinkPad X1 Carbon', 'Ubuntu 22.04', 256, 8, 'Mantenimiento', '2025-03-10'),
+('LAB-004', 'Desktop', 'Dell', 'OptiPlex 7090', 'Windows 11', 512, 16, 'Disponible', '2025-01-25'),
+('LAB-005', 'Laptop', 'Apple', 'MacBook Pro 14"', 'macOS Sonoma', 512, 16, 'En uso', '2025-02-15');
+
+-- Verificar datos insertados
+SELECT * FROM equipos;
+SELECT COUNT(*) as total_equipos FROM equipos;
+```
+
+5. Consultas útiles para verificación:
+
+```sql
+-- Ver equipos disponibles
+SELECT * FROM equipos WHERE estado = 'Disponible';
+
+-- Ver equipos por tipo
+SELECT tipo, COUNT(*) as cantidad FROM equipos GROUP BY tipo;
+
+-- Ver equipos que necesitan mantenimiento pronto
+SELECT codigo, modelo, mantenimiento 
+FROM equipos 
+WHERE mantenimiento < DATE_ADD(CURRENT_DATE, INTERVAL 30 DAY)
+ORDER BY mantenimiento;
+```
+
+
+PASO 16: CONFIGURAR USUARIOS ADICIONALES (OPCIONAL)
+----------------------------------------------------
+
+Para mayor seguridad, crear usuario específico para la aplicación:
+
+```sql
+-- Crear usuario para la aplicación (solo acceso a base de datos hackaton)
+CREATE USER 'app_user'@'%' IDENTIFIED BY 'OtraPasswordSegura456!';
+
+-- Dar permisos solo en la base de datos hackaton
+GRANT SELECT, INSERT, UPDATE, DELETE ON hackaton.* TO 'app_user'@'%';
+
+-- Aplicar cambios
+FLUSH PRIVILEGES;
+
+-- Verificar usuario creado
+SELECT User, Host FROM mysql.user WHERE User = 'app_user';
+
+-- Verificar permisos
+SHOW GRANTS FOR 'app_user'@'%';
+```
+
+VENTAJAS:
+- Usuario 'app_user' solo tiene acceso a base de datos 'hackaton'
+- Si la aplicación es comprometida, el atacante no tiene acceso completo
+- Usuario 'admin' se mantiene para administración
+
+
+OPCIÓN B - Conectar desde EC2 con MySQL Client:
+------------------------------------------------
+
+Si prefieres no usar MySQL Workbench:
+
+```bash
+# En tu instancia EC2, instalar MySQL client
+sudo apt update
+sudo apt install mysql-client -y
+
+# Conectar a RDS
+mysql -h hackaton-mysql-db.c9akciq32.us-east-1.rds.amazonaws.com -u admin -p
+
+# Ingresar contraseña cuando lo solicite
+# Luego ejecutar los comandos SQL anteriores
+```
+
+
+============================================
+PARTE 4: VERIFICACIÓN Y PRUEBAS
+============================================
+
+PASO 17: VERIFICAR CONEXIÓN DESDE PYTHON
+-----------------------------------------
+
+Crear script de prueba en tu PC o EC2:
+
+```python
+# test_rds_connection.py
+import MySQLdb
+
+# Configuración de conexión
+config = {
+    'host': 'hackaton-mysql-db.c9akciq32.us-east-1.rds.amazonaws.com',
+    'user': 'admin',
+    'password': 'TuPasswordSeguro123!',
+    'database': 'hackaton',
+    'port': 3306
+}
+
+try:
+    # Intentar conectar
+    print("🔄 Conectando a RDS...")
+    connection = MySQLdb.connect(**config)
+    
+    # Crear cursor
+    cursor = connection.cursor()
+    
+    # Ejecutar consulta de prueba
+    cursor.execute("SELECT VERSION()")
+    version = cursor.fetchone()
+    print(f"✅ Conexión exitosa!")
+    print(f"📊 MySQL version: {version[0]}")
+    
+    # Probar consulta a tabla
+    cursor.execute("SELECT COUNT(*) FROM equipos")
+    count = cursor.fetchone()
+    print(f"📦 Total de equipos: {count[0]}")
+    
+    # Cerrar conexión
+    cursor.close()
+    connection.close()
+    print("🔒 Conexión cerrada correctamente")
+    
+except MySQLdb.Error as e:
+    print(f"❌ Error de conexión: {e}")
+```
+
+Ejecutar:
+```bash
+python3 test_rds_connection.py
+```
+
+
+PASO 18: VERIFICAR PARÁMETROS DE RDS
+-------------------------------------
+
+En AWS Console > RDS > hackaton-mysql-db:
+
+1. Pestaña "Configuration":
+   - Verificar DB instance class
+   - Verificar Storage
+   - Verificar Availability Zone
+
+2. Pestaña "Monitoring":
+   - Ver gráficas de CPU utilization
+   - Ver Database connections
+   - Ver Free storage space
+
+3. Pestaña "Logs & events":
+   - Revisar eventos recientes
+   - Ver logs de errores (si están habilitados)
+
+
+============================================
+PARTE 5: BACKUPS Y RECUPERACIÓN
+============================================
+
+PASO 19: CONFIGURAR BACKUPS MANUALES
+-------------------------------------
+
+1. En AWS Console > RDS > Databases > hackaton-mysql-db
+
+2. Click en "Actions" > "Take snapshot"
+
+3. Configurar:
+   Snapshot name:
+   ┌─────────────────────────────────┐
+   │ hackaton-db-snapshot-20251211   │
+   └─────────────────────────────────┘
+
+4. Click "Take snapshot"
+
+5. Esperar a que el snapshot se complete (2-5 minutos)
+
+
+PASO 20: RESTAURAR DESDE SNAPSHOT
+----------------------------------
+
+Si necesitas restaurar la base de datos:
+
+1. Ir a RDS > Snapshots
+
+2. Seleccionar el snapshot a restaurar
+
+3. Click "Actions" > "Restore snapshot"
+
+4. Configurar nueva instancia:
+   - DB instance identifier: hackaton-mysql-db-restored
+   - Mismas configuraciones que la original
+
+5. Click "Restore DB instance"
+
+6. Actualizar app.py con el nuevo endpoint
+
+NOTA: Restaurar crea una NUEVA instancia, no sobrescribe la original
+
+
+PASO 21: EXPORTAR BASE DE DATOS MANUALMENTE
+--------------------------------------------
+
+Desde MySQL Workbench o MySQL client:
+
+```bash
+# Exportar toda la base de datos
+mysqldump -h hackaton-mysql-db.c9akciq32.us-east-1.rds.amazonaws.com \
+  -u admin -p hackaton > backup_hackaton_$(date +%Y%m%d).sql
+
+# Exportar solo la estructura (sin datos)
+mysqldump -h hackaton-mysql-db.c9akciq32.us-east-1.rds.amazonaws.com \
+  -u admin -p --no-data hackaton > structure_only.sql
+
+# Exportar solo los datos (sin estructura)
+mysqldump -h hackaton-mysql-db.c9akciq32.us-east-1.rds.amazonaws.com \
+  -u admin -p --no-create-info hackaton > data_only.sql
+```
+
+Importar backup:
+```bash
+mysql -h hackaton-mysql-db.c9akciq32.us-east-1.rds.amazonaws.com \
+  -u admin -p hackaton < backup_hackaton_20251211.sql
+```
+
+
+============================================
+PARTE 6: MONITOREO Y ALERTAS
+============================================
+
+PASO 22: CONFIGURAR CLOUDWATCH ALARMS
+--------------------------------------
+
+1. En AWS Console > CloudWatch > Alarms
+
+2. Click "Create alarm"
+
+3. Click "Select metric"
+
+4. Buscar "RDS" > "Per-Database Metrics"
+
+5. Seleccionar "hackaton-mysql-db"
+
+ALARMAS RECOMENDADAS:
+
+Alarma 1 - CPU Alto:
+- Metric: CPUUtilization
+- Threshold: > 80%
+- Period: 5 minutes
+- Action: Enviar email
+
+Alarma 2 - Conexiones Altas:
+- Metric: DatabaseConnections
+- Threshold: > 80
+- Period: 5 minutes
+- Action: Enviar email
+
+Alarma 3 - Espacio en Disco Bajo:
+- Metric: FreeStorageSpace
+- Threshold: < 2 GB
+- Period: 5 minutes
+- Action: Enviar email
+
+Alarma 4 - Latencia de Escritura Alta:
+- Metric: WriteLatency
+- Threshold: > 20 ms
+- Period: 5 minutes
+- Action: Enviar email
+
+
+PASO 23: HABILITAR ENHANCED MONITORING
+---------------------------------------
+
+Si no lo habilitaste al crear la instancia:
+
+1. RDS > Databases > hackaton-mysql-db
+
+2. Click "Modify"
+
+3. En "Monitoring":
+   ☑ Enable Enhanced monitoring
+   Granularity: 60 seconds
+
+4. Click "Continue"
+
+5. Seleccionar "Apply immediately"
+
+6. Click "Modify DB instance"
+
+
+============================================
+PARTE 7: OPTIMIZACIÓN DE RENDIMIENTO
+============================================
+
+PASO 24: AJUSTAR PARÁMETROS DE MYSQL
+-------------------------------------
+
+1. RDS > Parameter groups
+
+2. Click "Create parameter group"
+
+3. Configurar:
+   - Parameter group family: mysql8.0
+   - Type: DB Parameter Group
+   - Group name: hackaton-optimized
+   - Description: Parámetros optimizados para hackaton
+
+4. Click "Create"
+
+5. Click en el nuevo parameter group
+
+6. Click "Edit parameters"
+
+PARÁMETROS RECOMENDADOS PARA OPTIMIZAR:
+
+```
+max_connections = 200
+innodb_buffer_pool_size = {DBInstanceClassMemory*3/4}
+innodb_log_file_size = 256M
+slow_query_log = 1
+long_query_time = 2
+general_log = 0
+max_allowed_packet = 64M
+character_set_server = utf8mb4
+collation_server = utf8mb4_unicode_ci
+```
+
+7. Click "Save changes"
+
+8. Aplicar parameter group a la instancia:
+   - RDS > Databases > hackaton-mysql-db
+   - Click "Modify"
+   - DB parameter group: hackaton-optimized
+   - Click "Continue" > "Apply immediately"
+
+9. Reiniciar instancia para aplicar cambios:
+   - Actions > Reboot
+
+
+PASO 25: CREAR ÍNDICES ADICIONALES
+-----------------------------------
+
+Si notas consultas lentas:
+
+```sql
+-- Ver consultas lentas (si slow_query_log está habilitado)
+SHOW VARIABLES LIKE 'slow_query_log%';
+
+-- Analizar uso de índices
+EXPLAIN SELECT * FROM equipos WHERE tipo = 'Laptop';
+
+-- Crear índice compuesto si es necesario
+CREATE INDEX idx_tipo_estado ON equipos(tipo, estado);
+
+-- Ver todos los índices
+SHOW INDEX FROM equipos;
+
+-- Ver estadísticas de índices
+SELECT 
+    TABLE_NAME, 
+    INDEX_NAME, 
+    SEQ_IN_INDEX, 
+    COLUMN_NAME 
+FROM information_schema.STATISTICS 
+WHERE TABLE_SCHEMA = 'hackaton';
+```
+
+
+============================================
+PARTE 8: SEGURIDAD AVANZADA
+============================================
+
+PASO 26: HABILITAR SSL/TLS
+---------------------------
+
+1. Descargar certificado de RDS:
+```bash
+wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
+```
+
+2. Configurar conexión con SSL en Python:
+
+```python
+import MySQLdb
+
+connection = MySQLdb.connect(
+    host='hackaton-mysql-db.c9akciq32.us-east-1.rds.amazonaws.com',
+    user='admin',
+    password='TuPasswordSeguro123!',
+    database='hackaton',
+    ssl={'ca': '/path/to/global-bundle.pem'}
+)
+```
+
+3. Forzar conexiones SSL en RDS:
+
+```sql
+-- Para usuario específico
+ALTER USER 'admin'@'%' REQUIRE SSL;
+FLUSH PRIVILEGES;
+```
+
+
+PASO 27: AUDITORÍA Y LOGS
+--------------------------
+
+Habilitar logs de auditoría:
+
+1. RDS > Parameter groups > Editar parámetros:
+```
+server_audit_logging = 1
+server_audit_events = CONNECT,QUERY,TABLE
+```
+
+2. RDS > Databases > Modify > Log exports:
+   ☑ Audit log
+   ☑ Error log
+   ☑ Slow query log
+
+3. Ver logs en CloudWatch Logs
+
+
+============================================
+PARTE 9: COSTOS Y FACTURACIÓN
+============================================
+
+PASO 28: CALCULAR COSTOS
+-------------------------
+
+COSTOS FREE TIER (Primer año):
+- Instancia db.t3.micro: 750 horas/mes GRATIS
+- Almacenamiento: 20 GB GRATIS
+- Backups: 20 GB GRATIS
+- Transferencia de datos: 1 GB salida/mes GRATIS
+
+TOTAL: $0/mes (dentro de límites free tier)
+
+COSTOS DESPUÉS DE FREE TIER:
+
+db.t3.micro (1 vCPU, 1 GB RAM):
+- On-Demand: $0.017/hora = ~$12/mes
+- Reserved 1 año: $0.011/hora = ~$8/mes (37% ahorro)
+- Reserved 3 años: $0.007/hora = ~$5/mes (59% ahorro)
+
+Almacenamiento (gp3):
+- $0.115/GB-mes
+- 20 GB = $2.30/mes
+- 50 GB = $5.75/mes
+
+Backups:
+- Primeros 20 GB gratis
+- Después: $0.095/GB-mes
+
+Transferencia de datos:
+- Entrada (IN): GRATIS
+- Salida (OUT): $0.09/GB después del primer GB
+
+EJEMPLO - Producción pequeña:
+- db.t3.small (2 vCPU, 2 GB RAM): ~$30/mes
+- 50 GB storage: ~$6/mes
+- 30 GB backups: ~$1/mes
+- 10 GB transfer: ~$1/mes
+TOTAL: ~$38/mes
+
+
+PASO 29: OPTIMIZAR COSTOS
+--------------------------
+
+ESTRATEGIAS:
+
+1. Reserved Instances:
+   - Ahorrar hasta 72% comprometiéndose por 1-3 años
+   - RDS > Reserved instances > Purchase reserved DB instance
+
+2. Detener instancia cuando no se usa:
+   - RDS > Actions > Stop temporarily
+   - Máximo 7 días detenida, luego se reinicia automáticamente
+
+3. Ajustar almacenamiento:
+   - Empezar con 20 GB
+   - Dejar que autoscaling aumente cuando sea necesario
+
+4. Reducir retention de backups:
+   - 7 días es suficiente para desarrollo
+   - 30 días recomendado para producción
+
+5. Usar Savings Plans:
+   - Flexible entre servicios AWS
+   - Hasta 66% de ahorro
+
+
+PASO 30: MONITOREAR COSTOS
+---------------------------
+
+1. AWS Console > Billing Dashboard
+
+2. Click "Cost Explorer"
+
+3. Filtrar por servicio: RDS
+
+4. Ver costos por día/mes
+
+5. Configurar alertas de presupuesto:
+   - Billing > Budgets > Create budget
+   - Budget type: Cost budget
+   - Budget amount: $50/month
+   - Alerta al 80% ($40)
+
+
+============================================
+PARTE 10: TROUBLESHOOTING
+============================================
+
+PROBLEMAS COMUNES Y SOLUCIONES:
+
+PROBLEMA 1: No puedo conectar desde MySQL Workbench
+SOLUCIONES:
+✓ Verificar Security Group permite tu IP (puerto 3306)
+✓ Verificar Public accessibility = Yes
+✓ Verificar endpoint correcto (copiado completo)
+✓ Verificar credenciales (usuario: admin, no root)
+✓ Verificar que RDS status = Available
+
+PROBLEMA 2: Error "Access denied"
+SOLUCIONES:
+✓ Verificar contraseña correcta (mayúsculas/minúsculas)
+✓ Verificar usuario existe: SHOW GRANTS FOR 'admin'@'%';
+✓ Resetear contraseña: RDS > Modify > New master password
+
+PROBLEMA 3: Error "Can't connect to MySQL server"
+SOLUCIONES:
+✓ Verificar endpoint completo (incluir región)
+✓ Verificar puerto 3306
+✓ Probar conexión: nc -zv endpoint 3306
+✓ Verificar Security Group en VPC
+
+PROBLEMA 4: Base de datos 'hackaton' no existe
+SOLUCIONES:
+✓ Verificar que pusiste "Initial database name" al crear RDS
+✓ Crear manualmente: CREATE DATABASE hackaton;
+✓ Verificar: SHOW DATABASES;
+
+PROBLEMA 5: RDS muy lento
+SOLUCIONES:
+✓ Verificar CPU en Monitoring (CloudWatch)
+✓ Ver conexiones activas: SHOW PROCESSLIST;
+✓ Optimizar queries lentas: SHOW VARIABLES LIKE 'slow_query%';
+✓ Agregar índices a tablas
+✓ Aumentar instance class (db.t3.small, db.t3.medium)
+
+PROBLEMA 6: Espacio en disco lleno
+SOLUCIONES:
+✓ Verificar Free Storage Space en Monitoring
+✓ Habilitar Storage autoscaling
+✓ Limpiar logs antiguos
+✓ Eliminar datos no necesarios
+✓ Aumentar allocated storage
+
+PROBLEMA 7: Costos inesperados
+SOLUCIONES:
+✓ Verificar si estás fuera de free tier
+✓ Revisar backups (costo después de 20 GB)
+✓ Revisar snapshots antiguos (eliminar los no necesarios)
+✓ Revisar transferencia de datos OUT
+✓ Considerar Reserved Instances
+
+
+============================================
+COMANDOS ÚTILES DE MYSQL
+============================================
+
+```sql
+-- Ver todas las bases de datos
+SHOW DATABASES;
+
+-- Usar base de datos
+USE hackaton;
+
+-- Ver todas las tablas
+SHOW TABLES;
+
+-- Ver estructura de tabla
+DESCRIBE equipos;
+
+-- Ver usuarios
+SELECT User, Host FROM mysql.user;
+
+-- Ver permisos de usuario
+SHOW GRANTS FOR 'admin'@'%';
+
+-- Ver versión de MySQL
+SELECT VERSION();
+
+-- Ver variables del sistema
+SHOW VARIABLES LIKE '%max_connections%';
+
+-- Ver status del servidor
+SHOW STATUS LIKE '%Threads_connected%';
+
+-- Ver procesos activos
+SHOW PROCESSLIST;
+
+-- Matar proceso bloqueado
+KILL process_id;
+
+-- Ver tamaño de bases de datos
+SELECT 
+    table_schema AS 'Database',
+    ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS 'Size (MB)'
+FROM information_schema.tables
+GROUP BY table_schema;
+
+-- Ver tamaño de tablas
+SELECT 
+    table_name AS 'Table',
+    ROUND(((data_length + index_length) / 1024 / 1024), 2) AS 'Size (MB)'
+FROM information_schema.tables
+WHERE table_schema = 'hackaton'
+ORDER BY (data_length + index_length) DESC;
+```
+
+
+============================================
+INFORMACIÓN DE CONTACTO Y GUARDADO
+============================================
+
+GUARDAR ESTA INFORMACIÓN EN LUGAR SEGURO:
+
+AWS RDS - Información de Conexión:
+┌──────────────────────────────────────────────────┐
+│ Endpoint: hackaton-mysql-db.c9akciq32.us-east... │
+│ Port: 3306                                        │
+│ Master Username: admin                            │
+│ Master Password: TuPasswordSeguro123!             │
+│ Database Name: hackaton                           │
+│ Security Group: rds-hackaton-sg                   │
+│ Region: us-east-1 (o tu región)                  │
+└──────────────────────────────────────────────────┘
+
+Usuario de Aplicación (si lo creaste):
+┌──────────────────────────────────────────────────┐
+│ Username: app_user                                │
+│ Password: OtraPasswordSegura456!                  │
+│ Privileges: SELECT, INSERT, UPDATE, DELETE        │
+│ Database: hackaton                                │
+└──────────────────────────────────────────────────┘
+
+Usar en app.py:
+```python
+app.config['MYSQL_HOST'] = 'hackaton-mysql-db.c9akciq32.us-east-1.rds.amazonaws.com'
+app.config['MYSQL_USER'] = 'admin'
+app.config['MYSQL_PASSWORD'] = 'TuPasswordSeguro123!'
+app.config['MYSQL_DB'] = 'hackaton'
+```
+
+
+============================================
+CHECKLIST DE CONFIGURACIÓN RDS
+============================================
+
+Configuración Inicial:
+[ ] Crear instancia RDS MySQL 8.0
+[ ] Configurar credenciales (admin / TuPasswordSeguro123!)
+[ ] Seleccionar clase de instancia (db.t3.micro para free tier)
+[ ] Configurar almacenamiento (20 GB gp3 con autoscaling)
+[ ] Habilitar Public access (para desarrollo)
+[ ] Crear Security Group (rds-hackaton-sg)
+[ ] Crear base de datos inicial (hackaton)
+[ ] Habilitar backups automáticos (7 días)
+[ ] Habilitar encryption
+[ ] Habilitar Enhanced monitoring
+
+Security Group:
+[ ] Permitir puerto 3306 desde EC2 Security Group
+[ ] Permitir puerto 3306 desde tu IP (MySQL Workbench)
+[ ] NO permitir 0.0.0.0/0 en producción
+
+Base de Datos:
+[ ] Conectar con MySQL Workbench
+[ ] Crear tabla 'equipos'
+[ ] Insertar datos de prueba
+[ ] Crear índices necesarios
+[ ] Crear usuario de aplicación (opcional)
+[ ] Verificar conexión desde Python
+
+Monitoreo:
+[ ] Configurar CloudWatch Alarms (CPU, conexiones, storage)
+[ ] Habilitar Enhanced Monitoring
+[ ] Habilitar log exports (error, slow query)
+[ ] Configurar alertas de presupuesto
+
+Optimización:
+[ ] Ajustar parameter group si es necesario
+[ ] Crear snapshot manual inicial
+[ ] Documentar configuración
+[ ] Probar restauración desde snapshot
+
+
+============================================
+✅ RDS CONFIGURADO COMPLETAMENTE
+============================================
+
+¡Tu instancia RDS MySQL está lista para usar!
+
+PRÓXIMOS PASOS:
+1. Configurar instancia EC2 (ver MANUAL_EC2.txt)
+2. Actualizar app.py con endpoint de RDS
+3. Probar conexión desde aplicación Flask
+4. Monitorear rendimiento inicial
+
+RECURSOS ADICIONALES:
+- AWS RDS Documentation: https://docs.aws.amazon.com/rds/
+- MySQL Documentation: https://dev.mysql.com/doc/
+- AWS Free Tier: https://aws.amazon.com/free/
+
+============================================
+FIN DEL MANUAL RDS
+============================================
