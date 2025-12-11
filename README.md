@@ -10,73 +10,80 @@ Sistema web para registro y gestión de equipos informáticos desarrollado con F
 - 🗑️ Eliminación de equipos
 - 🎨 Interfaz moderna y responsive con Tailwind CSS
 - 🔄 API REST con endpoints JSON
+- ☁️ Despliegue en AWS (EC2 + RDS)
 
 ## 📋 Requisitos
 
 - Python 3.8+
-- MySQL 8.0+
-- Ubuntu 22.04 (para despliegue en EC2)
+- AWS RDS MySQL 8.0+
+- Ubuntu 22.04 EC2 (para despliegue)
+- Cuenta AWS activa
 
-## 🛠️ Instalación Local
+## 🛠️ Instalación y Configuración
 
-### 1. Instalar MySQL
+### Opción 1: Desarrollo Local (MySQL Local)
+
+1. **Instalar MySQL Local:**
 ```bash
-# En Ubuntu
 sudo apt update
 sudo apt install mysql-server -y
-```
-
-### 2. Configurar Base de Datos
-```bash
-# Acceder a MySQL
-mysql -u root -p
-
-# Importar estructura
 mysql -u root -p < database.sql
 ```
 
-### 3. Instalar Dependencias Python
-```bash
-# Crear entorno virtual
-python3 -m venv venv
-source venv/bin/activate  # En Windows: venv\Scripts\activate
-
-# Instalar dependencias
-pip install -r requirements.txt
-```
-
-### 4. Configurar Aplicación
-Editar `app.py` línea 33:
+2. **Configurar app.py:**
 ```python
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'tu_password_mysql'
 ```
 
-### 5. Ejecutar Aplicación
+3. **Instalar dependencias y ejecutar:**
 ```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 python app.py
 ```
 
-Abrir navegador en: `http://localhost:5000`
+### Opción 2: Producción AWS (EC2 + RDS)
 
-## 🌐 Despliegue en AWS EC2
+Ver archivo `DESPLIEGUE_EC2_RDS.txt` para instrucciones detalladas.
 
-Ver archivo `DESPLIEGUE_EC2.txt` para instrucciones completas.
+**Arquitectura:**
+- **EC2 Ubuntu 22.04:** Aplicación Flask + Gunicorn
+- **RDS MySQL 8.0:** Base de datos (instancia separada)
 
-### Resumen Rápido:
+**Pasos Resumidos:**
+
+1. **Crear RDS MySQL en AWS:**
+   - DB identifier: hackaton-mysql-db
+   - Master username: admin
+   - Crear base de datos 'hackaton'
+
+2. **Configurar app.py con endpoint RDS:**
+```python
+app.config['MYSQL_HOST'] = 'tu-endpoint-rds.rds.amazonaws.com'
+app.config['MYSQL_USER'] = 'admin'
+app.config['MYSQL_PASSWORD'] = 'tu_password_rds'
+```
+
+3. **Desplegar en EC2:**
 ```bash
-# 1. Instalar MySQL en EC2
-sudo apt install mysql-server -y
+# Clonar repositorio
+git clone https://github.com/anafelix21/ht252S2_wp_AnaFelix.git
+cd ht252S2_wp_AnaFelix
 
-# 2. Crear base de datos
-mysql -u root -p < database.sql
-
-# 3. Instalar dependencias
-sudo apt install python3-dev default-libmysqlclient-dev build-essential -y
+# Instalar dependencias
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 
-# 4. Ejecutar con Gunicorn
-gunicorn --workers 3 --bind 0.0.0.0:5000 app:app
+# Configurar como servicio systemd
+sudo systemctl enable flask-app
+sudo systemctl start flask-app
 ```
+
+**Ver manual completo:** `DESPLIEGUE_EC2_RDS.txt`
 
 ## 📁 Estructura del Proyecto
 
