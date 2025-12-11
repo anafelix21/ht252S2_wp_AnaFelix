@@ -1,5 +1,91 @@
+# ============================================
+# DEPENDENCIAS PRINCIPALES DE LA APLICACIÓN
+# ============================================
+
+# Flask - Framework web principal
 flask==3.0.0
+
+# Flask-MySQLdb - Extensión para conectar Flask con MySQL/RDS
 flask-mysqldb==2.0.0
+
+# mysqlclient - Driver MySQL para Python (requiere libmysqlclient-dev instalado)
 mysqlclient==2.2.0
+
+# python-dotenv - Manejo de variables de entorno desde archivo .env
 python-dotenv==1.0.0
+
+# gunicorn - Servidor WSGI para producción
 gunicorn==21.2.0
+
+
+# ============================================
+# DEPENDENCIAS ADICIONALES ÚTILES
+# ============================================
+
+# Werkzeug - Utilidades WSGI (ya incluido con Flask, pero especificamos versión)
+Werkzeug==3.0.1
+
+# Click - CLI para Flask (ya incluido con Flask)
+click==8.1.7
+
+# itsdangerous - Firmado de datos (ya incluido con Flask)
+itsdangerous==2.1.2
+
+# Jinja2 - Motor de templates (ya incluido con Flask)
+Jinja2==3.1.3
+
+# MarkupSafe - Escape de HTML (dependency de Jinja2)
+MarkupSafe==2.1.5
+
+# blinker - Señales de Flask
+blinker==1.7.0
+
+
+# ============================================
+# HERRAMIENTAS DE DESARROLLO (OPCIONAL)
+# ============================================
+
+# Flask-CORS - Manejo de CORS si necesitas conectar desde otro dominio
+flask-cors==4.0.0
+
+# cryptography - Cifrado y seguridad
+cryptography==41.0.7
+
+# PyMySQL - Alternativa a mysqlclient (por si mysqlclient falla)
+# PyMySQL==1.1.0
+
+
+# ============================================
+# PRODUCCIÓN Y MONITOREO
+# ============================================
+
+# greenlet - Concurrencia para mejor rendimiento
+greenlet==3.0.3
+
+
+# ============================================
+# NOTAS IMPORTANTES
+# ============================================
+#
+# ANTES DE INSTALAR requirements.txt:
+# 1. Asegúrate de tener instalado en el sistema:
+#    - python3-dev
+#    - default-libmysqlclient-dev
+#    - build-essential
+#    - pkg-config
+#
+# 2. Comando para instalar en Ubuntu/Debian:
+#    sudo apt install python3-dev default-libmysqlclient-dev build-essential pkg-config -y
+#
+# 3. Instalar en entorno virtual:
+#    python3 -m venv venv
+#    source venv/bin/activate
+#    pip install --upgrade pip setuptools wheel
+#    pip install -r requirements.txt
+#
+# 4. Si mysqlclient da error de compilación:
+#    - Verificar que libmysqlclient-dev está instalado
+#    - Verificar que pkg-config está instalado
+#    - Como alternativa, comentar mysqlclient y descomentar PyMySQL
+#
+# ============================================
